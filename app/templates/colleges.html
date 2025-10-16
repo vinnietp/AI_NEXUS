@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Colleges{% endblock %}
+
+{% block content %}
+  <section class="page-section">
+    <!-- Page bar / CTA row -->
+    <div class="page-bar">
+      <h1 class="page-title">Manage Colleges</h1>
+      <button type="button"
+              class="btn btn-secondary js-open-modal"
+              data-modal="#collegeModal">
+        Add College
+      </button>
+    </div>
+
+    <!-- Small stats -->
+    <div class="small-stats-container">
+      <div class="small-stat-card">
+        <h3>Active Colleges</h3>
+        <div class="value">{{ active_count or 0 }}</div>
+        <div class="icon">🏫</div>
+      </div>
+      <div class="small-stat-card">
+        <h3>Inactive Colleges</h3>
+        <div class="value">{{ inactive_count or 0 }}</div>
+        <div class="icon">⏸️</div>
+      </div>
+    </div>
+
+    <!-- Toolbar: search (left) + RHS filters (right) -->
+    <div class="clubs-toolbar" style="margin-top:16px;">
+      <form class="search-bar" method="get" action="{{ url_for('colleges') }}">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          id="collegeSearch"
+          name="q"
+          value="{{ q or '' }}"
+          placeholder="Search Colleges"
+        />
+      </form>
+
+      <!-- IMPORTANT: same class as clubs so CSS matches -->
+      <div class="clubs-toolbar-right">
+        <label class="filter-select-wrap" aria-label="Filter by status">
+          <select class="filter-select" id="collegeStatusFilter" name="status">
+            <option value="all"      {{ 'selected' if (status or 'all') == 'all' }}>All status</option>
+            <option value="active"   {{ 'selected' if (status or '') == 'active' }}>Active</option>
+            <option value="inactive" {{ 'selected' if (status or '') == 'inactive' }}>Inactive</option>
+          </select>
+        </label>
+
+        <label class="filter-select-wrap" aria-label="Sort by">
+          <select class="filter-select" id="collegeSortBy" name="sort">
+            <option value="none"    {{ 'selected' if (sort or 'none') == 'none' }}>Sort by</option>
+            <option value="name"    {{ 'selected' if (sort or '') == 'name' }}>College Name</option>
+            <option value="members" {{ 'selected' if (sort or '') == 'members' }}>Members</option>
+            <option value="newest"  {{ 'selected' if (sort or '') == 'newest' }}>Newest</option>
+            <option value="oldest"  {{ 'selected' if (sort or '') == 'oldest' }}>Oldest</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- All Colleges Table -->
+    <div class="table-container">
+      <div class="table-header">All Colleges</div>
+      <table class="table" data-table="colleges">
+        <thead>
+          <tr>
+            <th>College Name</th>
+            <th>Members</th>
+            <th>Clubs</th>
+            <th>Mail Id</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% if colleges and colleges|length > 0 %}
+          {% for c in colleges %}
+            {% set _status = (c.status or 'active')|lower %}
+            <tr
+              data-name="{{ c.college_name }}"
+              data-status="{{ _status }}"
+              data-members="{{ c.members_count or 0 }}"
+              data-created="{{ (c.created_time.isoformat() if c.created_time else '%010d'|format(c.college_id)) }}"
+            >
+              <td data-col="name">{{ c.college_name }}</td>
+              <td data-col="members">{{ c.members_count or 0 }}</td>
+              <td>{{ c.clubs_count or 0 }}</td>
+              <td>{{ c.email or "—" }}</td>
+              <td>{{ c.location or "—" }}</td>
+              <td data-col="status">
+                {% if _status == 'active' %}
+                  <span class="status status-active">Active</span>
+                {% else %}
+                  <span class="status status-inactive">Inactive</span>
+                {% endif %}
+              </td>
+              <td>
+                <a
+                  href="#collegeEditModal"
+                  class="action-btn js-open-modal js-edit-college"
+                  data-modal="#collegeEditModal"
+                  data-id="{{ c.college_id }}"
+                  data-name="{{ c.college_name }}"
+                  data-email="{{ c.email or '' }}"
+                  data-location="{{ c.location or '' }}"
+                  data-authority-name="{{ c.authority_name or '' }}"
+                  data-authority-role="{{ c.authority_role or '' }}"
+                  data-phone="{{ c.phone or '' }}"
+                  data-description="{{ c.description or '' }}"
+                  data-status="{{ _status }}"
+                >Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center;opacity:.7;">No colleges found.</td>
+          </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% include "components/college_modal.html" %}
+  {% include "components/college_edit_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

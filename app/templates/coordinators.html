@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Coordinators — AI Nexus{% endblock %}
+
+{% block content %}
+  <!-- Top bar -->
+  <div class="page-bar">
+    <div class="page-title">Manage Coordinators</div>
+    <button type="button" class="btn btn-secondary js-open-modal" data-modal="#coordinatorModal">
+      Assign Coordinator
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="small-stats-container">
+    <div class="small-stat-card">
+      <h3>Student Coordinators</h3>
+      <div class="value">{{ student_count or 0 }}</div>
+      <div class="icon">🎓</div>
+    </div>
+    <div class="small-stat-card">
+      <h3>College-side Roles</h3>
+      <div class="value">{{ faculty_count or 0 }}</div>
+      <div class="icon">👥</div>
+    </div>
+  </div>
+
+  <!-- Toolbar: Search + (Filter by Club) + Sort -->
+  <div class="clubs-toolbar" style="margin-top:16px;">
+    <form class="search-bar" method="get" action="{{ url_for('coordinators') }}">
+      <span class="search-icon">🔍</span>
+      <input id="coordinatorSearch" name="q" value="{{ q or '' }}" type="text" placeholder="Search Coordinator" aria-label="Search Coordinator" />
+    </form>
+
+    <div class="clubs-toolbar-right">
+      <!-- Filter by Club (uses club-id) -->
+      <label class="filter-select-wrap" aria-label="Filter by club">
+        <select class="filter-select" id="coordClubFilter" name="club_id" data-filter-key="club-id">
+          <option value="all" {{ 'selected' if (club_id or 'all') == 'all' }}>All clubs</option>
+          {% if clubs %}
+            {% for cl in clubs %}
+              <option value="{{ cl.club_id }}" {{ 'selected' if (club_id or '') == cl.club_id|string }}>
+                {{ cl.club_name }}
+              </option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </label>
+
+      <!-- Sort by -->
+      <label class="filter-select-wrap" aria-label="Sort by">
+        <select class="filter-select" id="coordSortBy" name="sort">
+          <option value="none"   {{ 'selected' if (sort or 'none') == 'none' }}>Sort by</option>
+          <option value="name"   {{ 'selected' if (sort or '') == 'name' }}>Coordinator Name</option>
+          <option value="club"   {{ 'selected' if (sort or '') == 'club' }}>Club</option>
+          <option value="newest" {{ 'selected' if (sort or '') == 'newest' }}>Newest</option>
+          <option value="oldest" {{ 'selected' if (sort or '') == 'oldest' }}>Oldest</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <div class="table-header">Active Coordinators</div>
+    <table class="table" data-table="coordinators">
+      <thead>
+        <tr>
+          <th scope="col">Coordinators</th>
+          <th scope="col">Clubs</th>
+          <th scope="col">Department</th>
+          <th scope="col">Mail Id</th>
+          <th scope="col">Mobile Number</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if coordinators and coordinators|length %}
+          {% for c in coordinators %}
+            {# created fallback: zero-padded id if created_time not present #}
+            <tr
+              data-name="{{ c.name }}"
+              data-club="{{ c.club }}"
+              data-club-id="{{ c.club_id }}"
+              data-created="{{ (c.created_time.isoformat() if c.created_time else '%010d'|format(c.id)) }}"
+            >
+              <!-- Coordinator name -->
+              <td data-col="name">{{ c.name|capitalize }}</td>
+
+              <!-- Club -->
+              <td data-col="club">{{ c.club }}</td>
+
+              <!-- Department -->
+              <td>{{ c.college_or_dept }}</td>
+
+              <!-- Email -->
+              <td><a href="mailto:{{ c.email }}">{{ c.email }}</a></td>
+
+              <!-- Phone -->
+              <td>{{ c.phone }}</td>
+
+              <!-- Action -->
+              <td>
+                <a
+                  href="#coordinatorEditModal"
+                  class="action-btn js-open-modal js-edit-coordinator"
+                  data-modal="#coordinatorEditModal"
+                  data-id="{{ c.id }}"
+                  data-name="{{ c.name }}"
+                  data-club-id="{{ c.club_id }}"
+                  data-college-id="{{ c.college_id or '' }}"
+                  data-faculty-dept="{{ c.faculty_dept or '' }}"
+                  data-role-type="{{ c.type if c.type != '—' else '' }}"
+                  data-email="{{ c.email or '' }}"
+                  data-phone="{{ c.phone or '' }}"
+                  data-description="{{ c.description or '' }}"
+                  data-status="{{ (c.status or 'active')|lower }}"
+                  data-image-url="{{ url_for('static', filename=c.image_path) if c.image_path else '' }}"
+                  data-image-name="{{ c.image_path.split('/')[-1] if c.image_path else '' }}"
+                >Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center; padding:16px; color:#666;">
+              No active coordinators found. Use <em>Assign Coordinator</em> to add one.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/coordinator_modal.html" %}
+  {% include "components/coordinator_edit_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

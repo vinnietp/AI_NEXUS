@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Events{% endblock %}
+
+{% block content %}
+  <!-- Page Title -->
+  <div class="page-bar">
+    <div class="page-title">Manage Events</div>
+    <button type="button" class="btn btn-secondary js-open-modal" data-modal="#eventModal">
+      Create New Events
+    </button>
+  </div>
+
+  <!-- Event Stats -->
+  <div class="small-stats-container">
+    <div class="small-stat-card">
+      <h3>Upcoming Events</h3>
+      <div class="value">{{ upcoming_count }}</div>
+      <div class="icon">🎓</div>
+    </div>
+    <div class="small-stat-card">
+      <h3>Completed Events</h3>
+      <div class="value">{{ completed_count }}</div>
+      <div class="icon">👥</div>
+    </div>
+  </div>
+
+  <!-- Upcoming Events Cards -->
+  <div class="section">
+    <div class="section-header">
+      <h3>Upcoming Events</h3>
+    </div>
+
+    <div class="events-container">
+      {% if upcoming_events and upcoming_events|length > 0 %}
+        {% for ev in upcoming_events %}
+          <div class="event-card-small">
+            <div class="event-header-small">
+              <h3>{{ ev.event_name }}</h3>
+              <p>{{ ev.club.club_name if ev.club else '—' }}</p>
+            </div>
+            <div class="event-body-small">
+              <div class="event-date">
+                <span class="icon">📅</span>
+                {{ card_datetime(ev.start_at) }}
+              </div>
+              <div class="event-description">
+                {{ ev.description or "—" }}
+              </div>
+              <a href="#" class="event-btn">View Details</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="opacity:.7;margin:8px 0;">No upcoming events scheduled.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Events toolbar -->
+  <div class="events-toolbar" style="margin-top:16px;">
+    <form class="search-bar" method="get" action="{{ url_for('events') }}">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="eventSearch" name="q" value="{{ q or '' }}" placeholder="Search Events" />
+    </form>
+
+    <div class="events-toolbar-right">
+      <label class="filter-select-wrap" aria-label="Filter by status">
+        <select class="filter-select" id="eventStatusFilter" name="status">
+          <option value="all">All status</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </label>
+
+      <label class="filter-select-wrap" aria-label="Sort by">
+        <select class="filter-select" id="eventSortBy" name="sort">
+          <option value="none">Sort by</option>
+          <option value="name">Event Name</option>
+          <option value="coordinator">Coordinator Name</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- All Events Table -->
+  <div class="table-container">
+    <div class="table-header">All Events</div>
+    <table class="table" data-table="events">
+      <thead>
+        <tr>
+          <th>Events</th>
+          <th>Coordinator</th>
+          <th>Members</th>
+          <th>Colleges</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if all_events and all_events|length > 0 %}
+          {% for ev in all_events %}
+            {% set _status = (ev.status or 'upcoming')|lower %}
+            <tr
+              data-name="{{ ev.event_name }}"
+              data-coordinator="{{ ev.event_coordinator or '' }}"
+              data-status="{{ _status }}"
+              data-created="{{ ev.start_at.isoformat() if ev.start_at }}"
+            >
+              <td data-col="name">{{ ev.event_name }}</td>
+              <td data-col="coordinator">{{ ev.event_coordinator or "—" }}</td>
+
+              {# Members mapped to max_participants (placeholder); Colleges left as placeholder. #}
+              <td>{{ ev.max_participants or 0 }}</td>
+              <td>—</td>
+
+              <td data-col="status">
+                <span class="status {{ 'status-' ~ _status }}">
+                  {{ _status|capitalize }}
+                </span>
+              </td>
+
+              <td>{{ table_date(ev.start_at) }}</td>
+
+              <td>
+                <a
+                  href="#eventEditModal"
+                  class="action-btn js-open-modal js-edit-event"
+                  data-modal="#eventEditModal"
+                  data-id="{{ ev.event_id }}"
+                  data-name="{{ ev.event_name }}"
+                  data-club-id="{{ ev.organising_club_id }}"
+                  data-coordinator="{{ ev.event_coordinator or '' }}"
+                  data-venue="{{ ev.venue or '' }}"
+                  data-start-date="{{ ev.start_at.strftime('%Y-%m-%d') if ev.start_at }}"
+                  data-start-time="{{ ev.start_at.strftime('%H:%M') if ev.start_at }}"
+                  data-end-date="{{ ev.end_at.strftime('%Y-%m-%d') if ev.end_at }}"
+                  data-end-time="{{ ev.end_at.strftime('%H:%M') if ev.end_at }}"
+                  data-max-participants="{{ ev.max_participants or '' }}"
+                  data-status="{{ _status }}"
+                  data-description="{{ ev.description or '' }}"
+                  data-image-url="{{ url_for('static', filename=ev.event_image) if ev.event_image else '' }}"
+                  data-image-name="{{ ev.event_image.split('/')[-1] if ev.event_image else '' }}"
+                >
+                  Edit
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" style="text-align:center;opacity:.7;">No events found.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "components/event_modal.html" %}
+  {% include "components/event_edit_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

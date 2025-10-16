@@ -1,0 +1,70 @@
+<!-- Create New College Modal -->
+<div id="collegeModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="collegeModalTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="collegeModalTitle">Add College</h2>
+      <a href="#" class="close-btn js-close-modal" aria-label="Close">×</a>
+    </div>
+
+    <form action="{{ url_for('create_college') }}" method="POST">
+      <!-- Pass source page so we can redirect back correctly -->
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <div class="form-row">
+        <!-- Left column -->
+        <div class="form-col">
+          <div class="form-group">
+            <label for="collegeName">College Name <span class="req">*</span></label>
+            <input type="text" id="collegeName" name="college_name" required placeholder="e.g., Nexus Institute" />
+          </div>
+
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" placeholder="City, State" />
+          </div>
+
+          <div class="form-group">
+            <label for="authorityName">College Authority Name</label>
+            <input type="text" id="authorityName" name="authority_name" placeholder="e.g., Dr. John Doe" />
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="form-col">
+          <div class="form-group">
+  <label for="authorityRole">Authority Role</label>
+  <input type="text" id="authorityRole" name="authority_role" placeholder="e.g., Principal / HOD / Faculty">
+</div>
+
+          <div class="form-group">
+            <label for="email">Mail Address</label>
+            <input type="email" id="email" name="email" placeholder="e.g., contact@nexus.edu" />
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+91 98765 43210" pattern="[0-9+ ]{7,15}" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="collegeDescription">Description</label>
+        <textarea id="collegeDescription" name="description" placeholder="Short description about the college..."></textarea>
+      </div>
+
+<!--      <div class="form-group">-->
+<!--        <label for="status">Status</label>-->
+<!--        <select id="status" name="status">-->
+<!--          <option value="active" selected>Active</option>-->
+<!--          <option value="inactive">Inactive</option>-->
+<!--        </select>-->
+<!--      </div>-->
+
+      <div class="modal__footer">
+        <button type="button" class="btn btn-light js-close-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save College</button>
+      </div>
+    </form>
+  </div>
+</div>

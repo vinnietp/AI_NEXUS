@@ -1,0 +1,113 @@
+<!-- templates/components/coordinator_edit_modal.html -->
+<div id="coordinatorEditModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-backdrop" data-modal-close></div>
+
+  <div class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="coordinatorEditModalTitle" aria-describedby="coordinatorEditModalDesc" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="coordinatorEditModalTitle">Edit Coordinator</h2>
+      <button type="button" class="close-btn js-close-modal" aria-label="Close">×</button>
+    </div>
+
+    <form action="{{ url_for('update_coordinator') }}" method="POST" enctype="multipart/form-data" novalidate>
+      <input type="hidden" id="editCoordinatorId" name="coordinator_id" />
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <div class="form-row">
+        <!-- Left column -->
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editCoordName">Coordinator Name <span aria-hidden="true">*</span></label>
+            <input type="text" id="editCoordName" name="coordinator_name"
+                   required minlength="2" maxlength="100" autocomplete="name" />
+          </div>
+
+          <div class="form-group">
+            <label for="editClubSelect">Club Name <span aria-hidden="true">*</span></label>
+            <select id="editClubSelect" name="club_id" required>
+              <option value="" disabled>Select a club</option>
+              {% for club in clubs %}
+                <option value="{{ club.club_id }}">{{ club.club_name }}</option>
+              {% else %}
+                <option value="" disabled>(No clubs available)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editCollegeSelect">College Name (optional)</label>
+            <select id="editCollegeSelect" name="college_id">
+              <option value="">— None —</option>
+              {% for college in colleges %}
+                <option value="{{ college.college_id }}">{{ college.college_name }}</option>
+              {% else %}
+                <option value="" disabled>(No colleges available)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editFacultyDept">Faculty/Dept</label>
+            <input type="text" id="editFacultyDept" name="faculty_dept"
+                   maxlength="100" placeholder="e.g., CSE / ECE / Design" />
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editRoleType">Role Type</label>
+            <input type="text" id="editRoleType" name="role_type"
+                   maxlength="50" placeholder="e.g., Student / Faculty / Lead" />
+          </div>
+
+          <div class="form-group">
+            <label for="editCoordEmail">Email (optional)</label>
+            <input type="email" id="editCoordEmail" name="email"
+                   maxlength="120" placeholder="name@example.com" autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="editCoordPhone">Phone (optional)</label>
+            <input type="tel" id="editCoordPhone" name="phone"
+                   maxlength="20" inputmode="numeric" pattern="[0-9\-+\s()]*"
+                   placeholder="+91 98765 43210" autocomplete="tel" />
+          </div>
+
+          <div class="form-group">
+            <label for="editCoordImage">Coordinator Image (optional)</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="editCoordImage" name="coordinator_image"
+                     class="file-input" accept="image/*" />
+              <label for="editCoordImage" class="file-input-label">Choose File</label>
+              <span class="file-name">No file chosen</span>
+              <img class="file-preview" alt="Image preview"
+                   style="display:none; max-width:140px; max-height:140px; margin-top:8px; border:1px solid #eee; border-radius:8px;" />
+            </div>
+            <div class="file-hint">Recommended: square 300×300 px (PNG/JPG).</div>
+          </div>
+
+          <!-- Status (since you already store it) -->
+          <div class="form-group">
+            <label for="editCoordStatus">Status</label>
+            <select id="editCoordStatus" name="status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="editCoordDesc">Description</label>
+        <textarea id="editCoordDesc" name="description" rows="4" maxlength="1000"
+                  placeholder="Brief profile or responsibilities"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="submit-btn">Save Changes</button>
+        <button type="button" class="btn js-close-modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

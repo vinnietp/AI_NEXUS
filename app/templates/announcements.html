@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Announcements — AI Nexus{% endblock %}
+
+{% block content %}
+
+<section class="page-section">
+  <!-- Page bar / CTA row -->
+  <div class="page-bar">
+    <h1 class="page-title">Announcements</h1>
+    <button type="button"
+            class="btn btn-secondary js-open-modal"
+            data-modal="#announcementModal">
+      Publish Announcement
+    </button>
+  </div>
+
+  <!-- Search Bar (kept as-is; optional wiring later) -->
+  <!-- SAME STRUCTURE/CLASSES AS CLUBS -->
+<div class="clubs-toolbar">
+  <!-- left: search (same form pattern) -->
+  <form class="search-bar" method="get" action="{{ url_for('announcements') }}">
+    <span class="search-icon">🔍</span>
+    <input id="annSearch" type="text" name="q" value="{{ q or '' }}" placeholder="Search Announcement" />
+  </form>
+
+  <!-- right: three selects -->
+  <div class="clubs-toolbar-right">
+    <!-- Status (only draft/published) -->
+    <label class="filter-select-wrap" aria-label="Filter by status">
+      <select class="filter-select" id="annStatusFilter" name="status">
+        {% set _status = (status or 'all') %}
+        <option value="all" {{ 'selected' if _status=='all' else '' }}>All status</option>
+        <option value="draft" {{ 'selected' if _status=='draft' else '' }}>Draft</option>
+        <option value="published" {{ 'selected' if _status=='published' else '' }}>Published</option>
+      </select>
+    </label>
+
+    <!-- Club -->
+    <label class="filter-select-wrap" aria-label="Filter by club">
+      <select class="filter-select" id="annClubFilter" name="club">
+        <option value="" {{ 'selected' if not club_id else '' }}>All clubs</option>
+        {% for c in clubs %}
+          <option value="{{ c.club_id }}" {{ 'selected' if club_id==c.club_id else '' }}>
+            {{ c.club_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <!-- Sort -->
+    <label class="filter-select-wrap" aria-label="Sort by">
+      <select class="filter-select" id="annSortBy" name="sort">
+        {% set _sort = (sort or 'none') %}
+        <option value="none"   {{ 'selected' if _sort=='none' else '' }}>Sort by</option>
+        <option value="title"  {{ 'selected' if _sort=='title' else '' }}>Title</option>
+        <option value="club"   {{ 'selected' if _sort=='club' else '' }}>Club</option>
+        <option value="newest" {{ 'selected' if _sort=='newest' else '' }}>Newest</option>
+        <option value="oldest" {{ 'selected' if _sort=='oldest' else '' }}>Oldest</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+
+  <!-- Announcement Cards (dynamic) -->
+  {% if announcements and announcements|length %}
+    {% for ann in announcements %}
+      <div class="announcement-card">
+        <div class="announcement-header">
+          <h3 class="announcement-title">
+            {% if ann.pinned %}📌 {% endif %}{{ ann.title }}
+          </h3>
+          <div class="announcement-status">{{ (ann.status or 'draft')|capitalize }}</div>
+        </div>
+
+        <div class="announcement-content">
+          {{ ann.content }}
+        </div>
+
+        <div class="announcement-footer">
+          <div class="announcement-date">
+            <span class="icon">📅</span>
+            {% if ann.publish_at %}
+              {{ ann.publish_at.strftime("%b %d, %Y") }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+          <div class="announcement-actions">
+
+           <a
+  href="#announcementEditModal"
+  class="action-btn js-open-modal js-edit-announcement"
+  data-modal="#announcementEditModal"
+  data-id="{{ ann.announcement_id if ann.announcement_id is defined else ann.id }}"
+  data-title="{{ ann.title|e }}"
+  data-content='{{ ann.content|tojson }}'
+  data-club-id="{{ ann.club_id or '' }}"
+  data-priority="{{ (ann.priority or 'normal')|lower }}"
+  data-audience="{{ (ann.audience or 'all_members')|lower }}"
+  data-status="{{ (ann.status or 'draft')|lower }}"
+  data-publish-date="{{ ann.publish_at.strftime('%Y-%m-%d') if ann.publish_at else '' }}"
+  data-publish-time="{{ ann.publish_at.strftime('%H:%M') if ann.publish_at else '' }}"
+  data-expire-date="{{ ann.expire_at.strftime('%Y-%m-%d') if ann.expire_at else '' }}"
+  data-expire-time="{{ ann.expire_at.strftime('%H:%M') if ann.expire_at else '' }}"
+  data-pinned="{{ '1' if ann.pinned else '0' }}"
+  data-send-email="{{ '1' if ann.send_email else '0' }}"
+>
+  Edit
+</a>
+
+
+            <a href="#" class="delete-btn">Delete</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="no-data" style="opacity:.7;">No announcements found.</p>
+  {% endif %}
+
+</section>
+
+{% include "components/announcement_modal.html" %}
+{% include "components/announcement_edit_modal.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

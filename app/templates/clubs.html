@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}clubs{% endblock %}
+
+{% block content %}
+  <section class="page-section">
+    <!-- Page bar / CTA row -->
+      <div class="page-bar">
+      <h1 class="page-title">Manage clubs</h1>
+
+      <button type="button"
+        class="btn btn-secondary js-open-modal"
+        data-modal="#clubModal">
+  Create New club
+</button>
+    </div>
+<!-- Toolbar: search (left) + RHS filters (right) -->
+<div class="clubs-toolbar">
+  <!-- keep your existing search exactly as-is -->
+  <form class="search-bar" method="get" action="{{ url_for('clubs') }}">
+    <span class="search-icon">🔍</span>
+    <input type="text" name="q" value="{{ q or '' }}" placeholder="Search Clubs" />
+  </form>
+
+  <!-- right side pills (design only) -->
+  <div class="clubs-toolbar-right">
+  <label class="filter-select-wrap" aria-label="Filter by status">
+    <select class="filter-select" id="statusFilter" name="status">
+      <option value="all">All status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </label>
+
+  <label class="filter-select-wrap" aria-label="Sort by">
+    <select class="filter-select" id="sortBy" name="sort">
+      <option value="none">Sort by</option>
+      <option value="name">Club Name</option>
+      <option value="coordinator">Coordinator Name</option>
+      <option value="newest">Newest</option>
+      <option value="oldest">Oldest</option>
+    </select>
+  </label>
+</div>
+
+</div>
+
+
+    <!-- All clubs Table -->
+    <div class="table-container">
+      <div class="table-header">All clubs</div>
+      <table class="table" data-table="clubs">
+        <thead>
+          <tr>
+            <th>club</th>
+            <th>Coordinator</th>
+            <th>Members</th>
+            <th>Colleges</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+     <tbody>
+  {% if clubs and clubs|length > 0 %}
+    {% for ch in clubs %}
+      {% set status_txt = (ch.status or 'active')|lower %}
+      <tr
+        data-name="{{ ch.club_name }}"
+        data-coordinator="{{ ch.coordinator or '' }}"
+        data-status="{{ status_txt }}"
+        data-created="{{ ch.created_time.isoformat() if ch.created_time }}"
+      >
+        <!-- Club Name -->
+        <td data-col="name">{{ ch.club_name }}</td>
+
+        <!-- Coordinator -->
+        <td data-col="coordinator">{{ ch.coordinator or "—" }}</td>
+
+        <!-- Members (placeholder until implemented) -->
+        <td>0</td>
+
+        <!-- Colleges (placeholder until implemented) -->
+        <td>—</td>
+
+        <!-- Status -->
+        <td data-col="status">
+          <span class="status {{ 'status-active' if status_txt == 'active' else 'status-inactive' }}">
+            {{ status_txt|capitalize }}
+          </span>
+        </td>
+
+        <!-- Actions -->
+        <td>
+          <a
+            href="#clubEditModal"
+            class="action-btn js-open-modal js-edit-club"
+            data-modal="#clubEditModal"
+            data-id="{{ ch.club_id }}"
+            data-name="{{ ch.club_name }}"
+            data-coordinator="{{ ch.coordinator or '' }}"
+            data-category="{{ ch.club_category or '' }}"
+            data-type="{{ ch.coordinator_type or '' }}"
+            data-description="{{ ch.description or '' }}"
+            data-image-url="{{ url_for('static', filename=ch.club_logo) if ch.club_logo else '' }}"
+            data-image-name="{{ ch.club_logo.split('/')[-1] if ch.club_logo else '' }}"
+          >
+            Edit
+          </a>
+        </td>
+      </tr>
+    {% endfor %}
+  {% else %}
+    <tr>
+      <td colspan="6" style="text-align:center; opacity:.7;">No clubs found.</td>
+    </tr>
+  {% endif %}
+</tbody>
+
+      </table>
+    </div>
+  </section>
+
+  {# ✅ include the modal once, outside the main content #}
+ {% include "components/club_modal.html" %}
+{% include "components/club_edit_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

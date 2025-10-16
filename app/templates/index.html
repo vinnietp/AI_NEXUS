@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <h1 class="welcome-message">Welcome back, Admin</h1>
+    <div class="action-buttons">
+        <button type="button"
+        class="btn btn-secondary js-open-modal"
+        data-modal="#clubModal">
+  Create New Club
+</button>
+      {% include "components/club_modal.html" %}
+      <button class="btn btn-primary">Schedule Event</button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <h3>Active Clubs</h3>
+      <div class="value">{{ active_clubs or 0 }}</div>
+      <div class="icon">🎓</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Members</h3>
+      <div class="value">250</div>
+      <div class="icon">👥</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Colleges</h3>
+      <div class="value">{{ active_colleges or 0 }}</div>
+      <div class="icon">🏫</div>
+    </div>
+    <div class="stat-card">
+      <h3>Total Coordinators</h3>
+      <div class="value">{{ active_coordinators or 0 }}</div>
+      <div class="icon">🎓</div>
+    </div>
+    <div class="stat-card">
+      <h3>Upcoming Events</h3>
+      <div class="value">{{ upcoming_events_count or 0 }}</div>
+      <div class="icon">📅</div>
+    </div>
+  </div>
+
+  <!-- Recent Activities & Upcoming Events -->
+  <div class="section-container">
+    <!-- Recent Activities -->
+    <div class="section">
+  <div class="section-header">
+    <h3>Recent Activities</h3>
+    <a href="{{ url_for('clubs') }}" class="view-all">View All</a>
+  </div>
+
+  {# Dynamically show the last two clubs (no ifs here) #}
+  {% for ch in recent_clubs %}
+    <div class="activity-item">
+      <div>
+        <div class="activity-title">New Club Registered</div>
+        <div class="activity-subtitle">{{ ch.name }}</div>
+      </div>
+      <div class="activity-time">{{ ch.time_ago }}</div>
+    </div>
+  {% else %}
+    <div class="activity-item">
+      <div>
+        <div class="activity-title">No recent clubs</div>
+        <div class="activity-subtitle">Create one to get started</div>
+      </div>
+      <div class="activity-time">—</div>
+    </div>
+  {% endfor %}
+
+        {# keep your static event items below #}
+       {% for ev in recent_events %}
+      <div class="activity-item">
+        <div>
+          <div class="activity-title">Event Created</div>
+          <div class="activity-subtitle">{{ ev.name }}</div>
+        </div>
+        <div class="activity-time">{{ ev.time_ago }}</div>
+      </div>
+      {% else %}
+  <div class="activity-item">
+    <div>
+      <div class="activity-title">No recent events</div>
+      <div class="activity-subtitle">Schedule one to get started</div>
+    </div>
+    <div class="activity-time">—</div>
+  </div>
+{% endfor %}
+
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="section">
+      <div class="section-header">
+        <h3>Upcoming Events</h3>
+        <a href="#" class="view-all">View All</a>
+      </div>
+       {% for ev in upcoming_events[:1] %}
+      <div class="event-card">
+        <div class="event-header">{{ ev.name }}</div>
+        <div class="event-details">
+          <div class="event-date">
+            <span class="icon">📅</span>
+            {{ ev.start_at.strftime("%b %d, %Y %I:%M %p") }}
+          </div>
+          <div class="event-description">
+          {{ ev.description }}
+          </div>
+          <a href="#" class="event-btn">View Details</a>
+        </div>
+      </div>
+        {% else %}
+  <p>No upcoming events.</p>
+  {% endfor %}
+    </div>
+  </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

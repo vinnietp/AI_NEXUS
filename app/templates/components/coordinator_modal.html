@@ -1,0 +1,112 @@
+<!-- templates/components/coordinator_modal.html -->
+<div id="coordinatorModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-backdrop" data-modal-close></div>
+
+  <div class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="coordinatorModalTitle" aria-describedby="coordinatorModalDesc" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="coordinatorModalTitle">Assign Coordinator</h2>
+      <button type="button" class="close-btn js-close-modal" aria-label="Close">×</button>
+    </div>
+
+    <form action="{{ url_for('assign_coordinator') }}" method="POST" enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <div class="form-row">
+        <!-- Left column -->
+        <div class="form-col">
+          <!-- Coordinator Name (required) -->
+          <div class="form-group">
+            <label for="coordName">Coordinator Name <span aria-hidden="true">*</span></label>
+            <input type="text" id="coordName" name="coordinator_name"
+                   required minlength="2" maxlength="100" autocomplete="name" autofocus />
+          </div>
+
+          <!-- Club Name (required select) -->
+          <div class="form-group">
+            <label for="clubSelect">Club Name <span aria-hidden="true">*</span></label>
+            <select id="clubSelect" name="club_id" required>
+              <option value="" disabled selected>Select a club</option>
+              {% for club in clubs %}
+                <option value="{{ club.club_id }}">{{ club.club_name }}</option>
+              {% else %}
+                <option value="" disabled>(No clubs available)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- College Name (optional select) -->
+          <div class="form-group">
+            <label for="collegeSelect">College Name (optional)</label>
+            <select id="collegeSelect" name="college_id">
+<!--              <option value="" selected>— None —</option>-->
+              {% for college in colleges %}
+                <option value="{{ college.college_id }}">{{ college.college_name }}</option>
+              {% else %}
+                <option value="" disabled>(No colleges available)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Faculty/Dept (text) -->
+          <div class="form-group">
+            <label for="facultyDept">Faculty/Dept</label>
+            <input type="text" id="facultyDept" name="faculty_dept"
+                   maxlength="100" placeholder="e.g., CSE / ECE / Design" />
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="form-col">
+          <!-- Role Type (plain textbox like name) -->
+          <div class="form-group">
+            <label for="roleType">Role Type</label>
+            <input type="text" id="roleType" name="role_type"
+                   maxlength="50" placeholder="e.g., Student / Faculty / Lead" />
+          </div>
+
+          <!-- Email (optional) -->
+          <div class="form-group">
+            <label for="coordEmail">Email (optional)</label>
+            <input type="email" id="coordEmail" name="email"
+                   maxlength="120" placeholder="name@example.com" autocomplete="email" />
+          </div>
+
+          <!-- Phone (optional, lightly cleaned) -->
+          <div class="form-group">
+            <label for="coordPhone">Phone (optional)</label>
+            <input type="tel" id="coordPhone" name="phone"
+                   maxlength="20" inputmode="numeric" pattern="[0-9\-+\s()]*"
+                   placeholder="+91 98765 43210" autocomplete="tel" />
+          </div>
+
+          <!-- Coordinator Image (optional) -->
+          <div class="form-group">
+            <label for="coordImage">Coordinator Image (optional)</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="coordImage" name="coordinator_image"
+                     class="file-input" accept="image/*" />
+              <label for="coordImage" class="file-input-label">Choose File</label>
+              <span class="file-name">No file chosen</span>
+              <img class="file-preview" alt="Image preview"
+                   style="display:none; max-width:140px; max-height:140px; margin-top:8px; border:1px solid #eee; border-radius:8px;" />
+            </div>
+            <div class="file-hint">Recommended: square 300×300 px (PNG/JPG).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="coordDesc">Description</label>
+        <textarea id="coordDesc" name="description" rows="4" maxlength="1000"
+                  placeholder="Brief profile or responsibilities"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="submit-btn">Assign</button>
+        <button type="button" class="btn js-close-modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

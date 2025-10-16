@@ -1,0 +1,62 @@
+<!-- Create New club Modal -->
+<div id="clubModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clubModalTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="clubModalTitle">Create New club</h2>
+      <a href="#" class="close-btn js-close-modal" aria-label="Close">×</a>
+    </div>
+
+    <form action="{{ url_for('create_club') }}" method="POST" enctype="multipart/form-data">
+      <!-- Pass source page so we can redirect back correctly -->
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="clubName">club Name</label>
+            <input type="text" id="clubName" name="club_name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="coordinator">Coordinator</label>
+            <input type="text" id="coordinator" name="coordinator" />
+          </div>
+
+          <div class="form-group">
+            <label for="clubLogo">club logo</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="clubLogo" name="club_logo" class="file-input" accept="image/*" />
+              <label for="clubLogo" class="file-input-label">Choose File</label>
+              <span class="file-name">No file chosen</span>
+              <img class="file-preview" alt="Logo preview"
+                   style="display:none; max-width:140px; max-height:140px; margin-top:8px; border:1px solid #eee; border-radius:8px;" />
+            </div>
+            <div class="file-hint">Recommended size: 300×300 pixels</div>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <input type="text" id="category" name="club_category" />
+          </div>
+
+          <div class="form-group">
+            <label for="typeOfCoordinator">Type of Coordinator</label>
+            <select id="typeOfCoordinator" name="coordinator_type">
+              <option value="student">Student</option>
+              <option value="faculty">Faculty</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="clubDescription">Description</label>
+        <textarea id="clubDescription" name="description"></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">Add club</button>
+    </form>
+  </div>
+</div>

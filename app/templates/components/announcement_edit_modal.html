@@ -1,0 +1,159 @@
+<!-- templates/components/announcement_edit_modal.html -->
+<div id="announcementEditModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="announcementEditTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="announcementEditTitle">Edit Announcement</h2>
+      <a href="#" class="close-btn js-close-modal" aria-label="Close">×</a>
+    </div>
+
+    <form action="{{ url_for('update_announcement') }}" method="POST">
+      <input type="hidden" id="editAnnId" name="id" />
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <!-- Top row: Club + Title -->
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editAnnClub">Select Club <span class="req">*</span></label>
+            <select id="editAnnClub" name="club_id" required>
+              <option value="">-- Select a Club --</option>
+              {% for cl in clubs or [] %}
+                <option value="{{ cl.club_id }}">{{ cl.club_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editAnnTitle">Announcement Title <span class="req">*</span></label>
+            <input type="text" id="editAnnTitle" name="title" required placeholder="e.g., Hackathon Registration Open">
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="form-group">
+        <label for="editAnnContent">Announcement Content <span class="req">*</span></label>
+        <textarea id="editAnnContent" name="content" required placeholder="Write the announcement details here..."></textarea>
+      </div>
+
+      <!-- Publish / Expire -->
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label>Publish Date &amp; Time</label>
+            <div class="form-row">
+              <div class="form-col">
+                <input type="date" id="editPublishDate" name="publish_date" aria-label="Publish Date" placeholder="dd-mm-yyyy">
+              </div>
+              <div class="form-col">
+                <select id="editPublishTime" name="publish_time" aria-label="Publish Time">
+                  <option value="">--</option>
+                  {% for h in range(0, 24) %}
+                    {% for m in [0, 30] %}
+                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
+                      {% set ampm = "AM" if h < 12 else "PM" %}
+                      {% set label = "%02d:%02d %s" % (hour12, m, ampm) %}
+                      {% set value = "%02d:%02d" % (h, m) %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="input-help">When should this announcement become visible?</div>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label>Expiration Date &amp; Time</label>
+            <div class="form-row">
+              <div class="form-col">
+                <input type="date" id="editExpireDate" name="expire_date" aria-label="Expiration Date" placeholder="dd-mm-yyyy">
+              </div>
+              <div class="form-col">
+                <select id="editExpireTime" name="expire_time" aria-label="Expiration Time">
+                  <option value="">--</option>
+                  {% for h in range(0, 24) %}
+                    {% for m in [0, 30] %}
+                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
+                      {% set ampm = "AM" if h < 12 else "PM" %}
+                      {% set label = "%02d:%02d %s" % (hour12, m, ampm) %}
+                      {% set value = "%02d:%02d" % (h, m) %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="input-help">Optional: auto remove/hide after this time.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority + Audience + Status -->
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editPriority">Priority Level</label>
+            <select id="editPriority" name="priority">
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editAudience">Target Audience</label>
+            <select id="editAudience" name="audience">
+              <option value="all_members">All Club Members</option>
+              <option value="coordinators">All Coordinators</option>
+              <option value="colleges">All Colleges</option>
+              <option value="student_coordinators">Only Student Coordinators</option>
+              <option value="college_coordinators">Only College Coordinators</option>
+              <option value="members">Only Members</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editAnnStatus">Status</label>
+            <select id="editAnnStatus" name="status">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label>Additional Options</label>
+            <div class="options-inline">
+              <label>
+                <input type="checkbox" id="editSendEmail" name="send_email">
+                <span>Send as email notification</span>
+              </label>
+              <label>
+                <input type="checkbox" id="editPinned" name="pinned">
+                <span>Pin this announcement on top</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__footer">
+        <button type="button" class="btn btn-light js-close-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>

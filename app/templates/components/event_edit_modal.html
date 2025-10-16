@@ -1,0 +1,130 @@
+<!-- components/event_edit_modal.html -->
+<div id="eventEditModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="eventEditTitle">
+    <div class="modal-header">
+      <h2 class="modal-title" id="eventEditTitle">Edit Event</h2>
+      <a href="#" class="close-btn js-close-modal" aria-label="Close">×</a>
+    </div>
+
+    <form action="{{ url_for('update_event') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" id="editEventId" name="event_id" />
+      <input type="hidden" name="source" value="{{ request.endpoint }}">
+
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="editEventName">Event Name</label>
+            <input type="text" id="editEventName" name="event_name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editOrganisingClub">Organising club</label>
+            <select id="editOrganisingClub" name="organising_club" required>
+              {% if clubs %}
+                <option value="" disabled>Select club</option>
+                {% for ch in clubs %}
+                  <option value="{{ ch.club_id }}">{{ ch.club_name }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="" disabled selected>Select club</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editEventCoordinator">Event Coordinator</label>
+            <input type="text" id="editEventCoordinator" name="event_coordinator" />
+          </div>
+
+          <div class="form-group">
+            <label for="editVenue">Venue</label>
+            <input type="text" id="editVenue" name="venue" />
+          </div>
+        </div>
+
+        <div class="form-col">
+          <!-- Start -->
+          <div class="form-group">
+            <label>Start Date &amp; Time</label>
+            <div class="form-row">
+              <div class="form-col">
+                <input type="date" id="editStartDate" name="start_date" required>
+              </div>
+              <div class="form-col">
+                <select id="editStartTime" name="start_time" required>
+                  <option value="">--</option>
+                  {% for h in range(0, 24) %}
+                    {% for m in [0, 30] %}
+                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
+                      {% set ampm   = "AM" if h < 12 else "PM" %}
+                      {% set label  = "%02d:%02d %s" % (hour12, m, ampm) %}
+                      {% set value  = "%02d:%02d" % (h, m) %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- End -->
+          <div class="form-group">
+            <label>End Date &amp; Time</label>
+            <div class="form-row">
+              <div class="form-col">
+                <input type="date" id="editEndDate" name="end_date" required>
+              </div>
+              <div class="form-col">
+                <select id="editEndTime" name="end_time" required>
+                  <option value="">--</option>
+                  {% for h in range(0, 24) %}
+                    {% for m in [0, 30] %}
+                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
+                      {% set ampm   = "AM" if h < 12 else "PM" %}
+                      {% set label  = "%02d:%02d %s" % (hour12, m, ampm) %}
+                      {% set value  = "%02d:%02d" % (h, m) %}
+                      <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editEventImage">Event Image</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="editEventImage" name="event_image" class="file-input" accept="image/*" />
+              <label for="editEventImage" class="file-input-label">Choose File</label>
+              <span class="file-name">No file chosen</span>
+              <img class="file-preview" alt="Event image preview"
+                   style="display:none; max-width:140px; max-height:140px; margin-top:8px; border:1px solid #eee; border-radius:8px;" />
+            </div>
+            <div class="file-hint">Recommended size: 1200×628 or 800×450</div>
+          </div>
+
+          <div class="form-group">
+            <label for="editMaxParticipants">Max Participants</label>
+            <input type="number" id="editMaxParticipants" name="max_participants" min="1" step="1" />
+          </div>
+
+          <div class="form-group">
+            <label for="editStatus">Status</label>
+            <select id="editStatus" name="status">
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="editEventDescription">Description</label>
+        <textarea id="editEventDescription" name="description"></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">Save changes</button>
+    </form>
+  </div>
+</div>

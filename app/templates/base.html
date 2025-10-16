@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}AI Nexus{% endblock %}</title>
+    <link rel="stylesheet " href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="user-info">
+        <div class="notification">🔔</div>
+        <div class="avatar">N</div>
+        <div class="name">Name</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navbar">
+      <a href="{{ url_for('index') }}"
+         class="nav-item {% if request.endpoint=='index' %}active{% endif %}">Dashboard</a>
+      <a href="{{ url_for('clubs') }}"
+         class="nav-item {% if request.endpoint=='clubs' %}active{% endif %}">Clubs</a>
+      <a href="{{ url_for('events') }}"
+         class="nav-item {% if request.endpoint=='events' %}active{% endif %}">Events</a>
+       <a href="{{ url_for('colleges') }}"
+         class="nav-item {% if request.endpoint=='colleges' %}active{% endif %}">Colleges</a>
+      <a href="{{ url_for('coordinators') }}"
+         class="nav-item {% if request.endpoint=='coordinators' %}active{% endif %}">Coordinators</a>
+      <a href="{{ url_for('coordinators') }}"
+         class="nav-item {% if request.endpoint=='coordinators' %}active{% endif %}">Members</a>
+     <a href="{{ url_for('announcements') }}"
+         class="nav-item {% if request.endpoint=='announcements' %}active{% endif %}">Announcements</a>
+    </div>
+
+    <!-- Main Page Content -->
+    <main class="main-content">
+      <!-- Flash messages -->
+      <div class="flash-container" aria-live="polite" aria-atomic="true">
+        {% with msgs = get_flashed_messages(with_categories=True) %}
+          {% if msgs %}
+            {% for category, message in msgs %}
+              <div class="flash flash-{{ category|lower }}" role="alert">
+                <span class="flash-text">{{ message }}</span>
+                <button class="flash-close" aria-label="Dismiss">×</button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Auto-dismiss + close behavior for flashes -->
+    <script>
+      (function () {
+        const flashes = document.querySelectorAll('.flash');
+        flashes.forEach((el) => {
+          const closeBtn = el.querySelector('.flash-close');
+          const remove = () => {
+            el.classList.add('flash-hide');
+            setTimeout(() => el.remove(), 250);
+          };
+          if (closeBtn) closeBtn.addEventListener('click', remove);
+          // Auto-dismiss after 4s
+          setTimeout(remove, 4000);
+        });
+      })();
+    </script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
