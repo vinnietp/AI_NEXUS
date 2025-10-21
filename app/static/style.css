@@ -1010,6 +1010,7 @@ textarea { min-height: 110px; resize: vertical; }
   display: flex;
   gap: 20px;
   align-items: center;
+  border: 0.5 px solid #e0e0e0;  /* 👈 light gray border */
 }
 
 .featured-chapter-image {

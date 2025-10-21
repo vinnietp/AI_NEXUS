@@ -897,3 +897,25 @@ def register_routes(app):
     @app.route("/profile")
     def profile():
        return render_template('profile.html')
+
+    # DELETE OPERATIONS
+    @app.route("/clubs/delete", methods=["POST"])
+    def delete_club_form():
+        """Delete a club from the admin UI (form submit version)."""
+        club_id = request.form.get("club_id", type=int)
+        club = Club.query.get(club_id)
+
+        if not club:
+            flash("❌ Club not found.", "error")
+            return redirect(url_for("clubs"))
+
+        try:
+            db.session.delete(club)
+            db.session.commit()
+            flash("✅ Club deleted successfully!", "success")
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Failed to delete club")
+            flash("❌ Failed to delete club.", "error")
+
+        return redirect(url_for("clubs"))
