@@ -9,7 +9,7 @@
       <button type="button" class="close-btn js-close-modal" aria-label="Close">×</button>
     </div>
 
-    <form action="{{ url_for('assign_coordinator') }}" method="POST" enctype="multipart/form-data" novalidate>
+    <form action="{{ url_for('assign_coordinator') }}" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="source" value="{{ request.endpoint }}">
 
       <div class="form-row">
@@ -39,7 +39,7 @@
           <div class="form-group">
             <label for="collegeSelect">College Name (optional)</label>
             <select id="collegeSelect" name="college_id">
-<!--              <option value="" selected>— None —</option>-->
+              <option value="" selected>— None —</option>
               {% for college in colleges %}
                 <option value="{{ college.college_id }}">{{ college.college_name }}</option>
               {% else %}

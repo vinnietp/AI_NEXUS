@@ -41,13 +41,32 @@
             </div>
             <div class="event-body-small">
               <div class="event-date">
-                <span class="icon">📅</span>
                 {{ card_datetime(ev.start_at) }}
               </div>
               <div class="event-description">
                 {{ ev.description or "—" }}
               </div>
-              <a href="#" class="event-btn">View Details</a>
+              <div class="event-actions">
+                <a href="#" class="event-btn"
+                   data-id="{{ ev.event_id }}"
+                   data-name="{{ ev.event_name }}"
+                   data-club="{{ ev.club.club_name if ev.club else '' }}"
+                   data-club-id="{{ ev.organising_club_id }}"
+                   data-venue="{{ ev.venue or '' }}"
+                   data-description="{{ ev.description or '' }}"
+                   data-image-url="{{ url_for('static', filename=ev.event_image) if ev.event_image else '' }}"
+                   data-image-name="{{ ev.event_image.split('/')[-1] if ev.event_image else '' }}"
+                   data-participants="{{ ev.max_participants or 0 }}"
+                   data-coordinator="{{ ev.event_coordinator or '' }}"
+                   data-status="{{ (ev.status or 'upcoming')|lower }}"
+                   data-colleges="0"
+                   data-start-date-time="{{ (ev.start_at.strftime('%Y-%m-%d') + ' at ' + ev.start_at.strftime('%H:%M')) if ev.start_at else '' }}"
+                   data-start-date="{{ ev.start_at.strftime('%Y-%m-%d') if ev.start_at }}"
+                   data-start-time="{{ ev.start_at.strftime('%H:%M') if ev.start_at }}"
+                   data-end-date="{{ ev.end_at.strftime('%Y-%m-%d') if ev.end_at }}"
+                   data-end-time="{{ ev.end_at.strftime('%H:%M') if ev.end_at }}"
+                   data-max-participants="{{ ev.max_participants or '' }}">View Details</a>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -55,13 +74,53 @@
         <p style="opacity:.7;margin:8px 0;">No upcoming events scheduled.</p>
       {% endif %}
     </div>
+
+  <!-- Featured Event Card for Upcoming Events (filled by JS) -->
+  <div class="featured-event-card" id="upcomingFeaturedEventCard" hidden>
+    <button class="card-close-btn" id="ufeCloseBtn" title="Close">×</button>
+    <div class="featured-event-image">
+      <img id="ufeImageUrl" alt="" />
+    </div>
+
+      <div class="featured-event-content">
+        <h3 class="featured-event-title" id="ufeName"></h3>
+        <p id="ufeClub"></p>
+        <p class="featured-event-start-datetime" id="ufeStartDateTime">—</p>
+        <p id="ufeVenue"></p>
+        <p class="featured-event-description" id="ufeDescription"></p>
+
+        <div class="featured-event-stats">
+          <div class="featured-event-stat">
+            <span class="icon">👥</span>
+            <span id="ufeParticipants">0</span> Participants
+          </div>
+          <div class="featured-event-stat">
+            <span class="icon">🎓</span>
+            <span id="ufeCoordinator">—</span>
+          </div>
+          <div class="featured-event-stat">
+            <span class="icon">📊</span>
+            <span id="ufeStatus">Upcoming</span>
+          </div>
+        </div>
+
+        <div class="featured-event-actions">
+          <a href="#" class="action-btn" id="ufeEditBtn">Edit</a>
+          <a href="#" class="delete-btn" id="ufeDeleteBtn">Delete</a>
+        </div>
+      </div>
+    </div>
+    <!-- Featured Event Card end -->
   </div>
+
+
 
   <!-- Events toolbar -->
   <div class="events-toolbar" style="margin-top:16px;">
     <form class="search-bar" method="get" action="{{ url_for('events') }}">
       <span class="search-icon">🔍</span>
       <input type="text" id="eventSearch" name="q" value="{{ q or '' }}" placeholder="Search Events" />
+      <div id="eventChoices" hidden></div>
     </form>
 
     <div class="events-toolbar-right">
@@ -86,6 +145,43 @@
     </div>
   </div>
 
+  <!-- Featured Event Card for Search (filled by JS) -->
+  <div class="featured-event-card" id="searchFeaturedEventCard" hidden>
+    <button class="card-close-btn" id="sfeCloseBtn" title="Close">×</button>
+    <div class="featured-event-image">
+      <img id="sfeImageUrl" alt="" />
+    </div>
+
+    <div class="featured-event-content">
+      <h3 class="featured-event-title" id="sfeName"></h3>
+      <p id="sfeClub"></p>
+      <p><span id="sfeStartDateTime">—</span></p>
+      <p><span id="sfeVenue">—</span></p>
+      <p class="featured-event-description" id="sfeDescription"></p>
+
+      <div class="featured-event-stats">
+        <div class="featured-event-stat">
+          <span class="icon">👥</span>
+          <span id="sfeParticipants">0</span> Participants
+        </div>
+        <div class="featured-event-stat">
+          <span class="icon">🎓</span>
+          <span id="sfeCoordinator">—</span>
+        </div>
+        <div class="featured-event-stat">
+          <span class="icon">📊</span>
+          <span id="sfeStatus">Upcoming</span>
+        </div>
+      </div>
+
+        <div class="featured-event-actions">
+          <a href="#" class="action-btn" id="sfeEditBtn">Edit</a>
+          <a href="#" class="delete-btn" id="sfeDeleteBtn">Delete</a>
+        </div>
+    </div>
+  </div>
+  <!-- Featured Event Card end -->
+
   <!-- All Events Table -->
   <div class="table-container">
     <div class="table-header">All Events</div>
@@ -94,7 +190,7 @@
         <tr>
           <th>Events</th>
           <th>Coordinator</th>
-          <th>Members</th>
+          <th>Participants</th>
           <th>Colleges</th>
           <th>Status</th>
           <th>Date</th>
@@ -106,10 +202,14 @@
           {% for ev in all_events %}
             {% set _status = (ev.status or 'upcoming')|lower %}
             <tr
+                    data-id="{{ ev.event_id }}"         {# <-- add this  for pagination#}
               data-name="{{ ev.event_name }}"
               data-coordinator="{{ ev.event_coordinator or '' }}"
               data-status="{{ _status }}"
               data-created="{{ ev.start_at.isoformat() if ev.start_at }}"
+              data-colleges="0"
+              data-club="{{ ev.club.club_name if ev.club else '' }}"
+              data-start-date-time="{{ (ev.start_at.strftime('%Y-%m-%d') + ' at ' + ev.start_at.strftime('%H:%M')) if ev.start_at else '' }}"
             >
               <td data-col="name">{{ ev.event_name }}</td>
               <td data-col="coordinator">{{ ev.event_coordinator or "—" }}</td>
@@ -138,6 +238,7 @@
                   data-venue="{{ ev.venue or '' }}"
                   data-start-date="{{ ev.start_at.strftime('%Y-%m-%d') if ev.start_at }}"
                   data-start-time="{{ ev.start_at.strftime('%H:%M') if ev.start_at }}"
+                  data-start-date-time="{{ (ev.start_at.strftime('%Y-%m-%d') + ' at ' + ev.start_at.strftime('%H:%M')) if ev.start_at else '' }}"
                   data-end-date="{{ ev.end_at.strftime('%Y-%m-%d') if ev.end_at }}"
                   data-end-time="{{ ev.end_at.strftime('%H:%M') if ev.end_at }}"
                   data-max-participants="{{ ev.max_participants or '' }}"
@@ -148,6 +249,7 @@
                 >
                   Edit
                 </a>
+                <a href="#" class="delete-btn js-delete-event" data-id="{{ ev.event_id }}" data-name="{{ ev.event_name }}">Delete</a>
               </td>
             </tr>
           {% endfor %}
@@ -158,10 +260,46 @@
         {% endif %}
       </tbody>
     </table>
+        <nav id="eventsPagination" class="pagination" aria-label="Events pagination"></nav>
+
   </div>
 
   {% include "components/event_modal.html" %}
   {% include "components/event_edit_modal.html" %}
+
+{# Hidden delete forms (template-route fallback) #}
+<form id="deleteClubForm" method="POST" action="{{ url_for('delete_club_form') }}" style="display:none;">
+  <input type="hidden" name="club_id" id="deleteClubId">
+</form>
+<form id="deleteEventForm" method="POST" action="{{ url_for('delete_event_form') }}" style="display:none;">
+  <input type="hidden" name="event_id" id="deleteEventId">
+</form>
+<form id="deleteCollegeForm" method="POST" action="{{ url_for('delete_college_form') }}" style="display:none;">
+  <input type="hidden" name="college_id" id="deleteCollegeId">
+</form>
+<form id="deleteCoordinatorForm" method="POST" action="{{ url_for('delete_coordinator_form') }}" style="display:none;">
+  <input type="hidden" name="coordinator_id" id="deleteCoordinatorId">
+</form>
+<form id="deleteAnnouncementForm" method="POST" action="{{ url_for('delete_announcement_form') }}" style="display:none;">
+  <input type="hidden" name="announcement_id" id="deleteAnnouncementId">
+</form>
+
+{# Delete confirmation modal #}
+<div id="deleteConfirmModal" class="delete-modal-overlay" hidden>
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <h3>Delete Item</h3>
+      <button type="button" class="delete-close" id="closeDeleteModal">×</button>
+    </div>
+    <div class="delete-modal-body">
+      <p>Are you sure you want to delete this item?</p>
+    </div>
+    <div class="delete-modal-footer">
+      <button id="confirmDeleteBtn" class="btn btn-danger">DELETE</button>
+      <button id="cancelDeleteBtn" class="btn btn-secondary">CANCEL</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

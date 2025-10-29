@@ -48,18 +48,15 @@
             <label>Start Date &amp; Time</label>
             <div class="form-row">
               <div class="form-col">
-                <input type="date" id="editStartDate" name="start_date" required>
+                <input type="date" id="editStartDate" name="start_date">
               </div>
               <div class="form-col">
-                <select id="editStartTime" name="start_time" required>
-                  <option value="">--</option>
-                  {% for h in range(0, 24) %}
-                    {% for m in [0, 30] %}
-                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
-                      {% set ampm   = "AM" if h < 12 else "PM" %}
-                      {% set label  = "%02d:%02d %s" % (hour12, m, ampm) %}
-                      {% set value  = "%02d:%02d" % (h, m) %}
-                      <option value="{{ value }}">{{ label }}</option>
+                <select id="editStartTime" name="start_time" aria-label="Start Time">
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}">{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
                   {% endfor %}
                 </select>
@@ -72,18 +69,15 @@
             <label>End Date &amp; Time</label>
             <div class="form-row">
               <div class="form-col">
-                <input type="date" id="editEndDate" name="end_date" required>
+                <input type="date" id="editEndDate" name="end_date">
               </div>
               <div class="form-col">
-                <select id="editEndTime" name="end_time" required>
-                  <option value="">--</option>
-                  {% for h in range(0, 24) %}
-                    {% for m in [0, 30] %}
-                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
-                      {% set ampm   = "AM" if h < 12 else "PM" %}
-                      {% set label  = "%02d:%02d %s" % (hour12, m, ampm) %}
-                      {% set value  = "%02d:%02d" % (h, m) %}
-                      <option value="{{ value }}">{{ label }}</option>
+                <select id="editEndTime" name="end_time" aria-label="End Time">
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}">{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
                   {% endfor %}
                 </select>
@@ -128,3 +122,5 @@
     </form>
   </div>
 </div>
+
+

@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Announcements — AI Nexus{% endblock %}
+
+{% block content %}
+
+<section class="page-section">
+  <!-- Page bar / CTA row -->
+  <div class="page-bar">
+    <h1 class="page-title">Announcements</h1>
+    <button type="button"
+            class="btn btn-secondary js-open-modal"
+            data-modal="#announcementModal">
+      Publish Announcement
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="clubs-toolbar">
+    <!-- Search -->
+    <form class="search-bar table-toolbar" method="get" action="{{ url_for('announcements') }}">
+      <span class="search-icon">🔍</span>
+      <input id="annSearch" type="text" name="q" value="{{ q or '' }}" placeholder="Search Announcement" />
+      <div id="annChoices" hidden></div>
+    </form>
+
+    <!-- Right controls -->
+    <div class="clubs-toolbar-right">
+      <!-- Status -->
+      <label class="filter-select-wrap" aria-label="Filter by status">
+        {% set _status = (status or 'all') %}
+        <select class="filter-select" id="annStatusFilter" name="status">
+          <option value="all"      {{ 'selected' if _status=='all' else '' }}>All status</option>
+          <option value="draft"    {{ 'selected' if _status=='draft' else '' }}>Draft</option>
+          <option value="published"{{ 'selected' if _status=='published' else '' }}>Published</option>
+        </select>
+      </label>
+
+      <!-- Club -->
+      <label class="filter-select-wrap" aria-label="Filter by club">
+        <select class="filter-select" id="annClubFilter" name="club">
+          <option value="" {{ 'selected' if not club_id else '' }}>All clubs</option>
+          {% for c in clubs %}
+            <option value="{{ c.club_id }}" {{ 'selected' if club_id==c.club_id else '' }}>
+              {{ c.club_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <!-- Sort -->
+      <label class="filter-select-wrap" aria-label="Sort by">
+        {% set _sort = (sort or 'none') %}
+        <select class="filter-select" id="annSortBy" name="sort">
+          <option value="none"   {{ 'selected' if _sort=='none' else '' }}>Sort by</option>
+          <option value="title"  {{ 'selected' if _sort=='title' else '' }}>Title</option>
+          <option value="club"   {{ 'selected' if _sort=='club' else '' }}>Club</option>
+          <option value="newest" {{ 'selected' if _sort=='newest' else '' }}>Newest</option>
+          <option value="oldest" {{ 'selected' if _sort=='oldest' else '' }}>Oldest</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Featured Card (filled by JS) -->
+  <div class="featured-chapter-card" id="featuredAnnCard" hidden>
+    <div class="featured-chapter-image">
+      <img id="fcImage" alt="" />
+    </div>
+
+    <div class="featured-chapter-content">
+      <h3 class="featured-chapter-title" id="fcTitle"></h3>
+      <p class="featured-chapter-description" id="fcDesc"></p>
+
+      <div class="featured-chapter-stats">
+        <div class="featured-chapter-stat">
+          <span class="icon">🏫</span>
+          <span id="fcClub">—</span>
+        </div>
+        <div class="featured-chapter-stat">
+          <span class="icon">📅</span>
+          <span id="fcStatus">—</span>
+        </div>
+      </div>
+
+      <div class="featured-chapter-actions">
+        <a href="#" class="action-btn" id="fcEditBtn">Edit</a>
+        <a href="#" class="delete-btn" id="fcDeleteBtn">Delete</a>
+      </div>
+    </div>
+  </div>
+  <!-- Featured Card end -->
+
+  <!-- Announcement Cards -->
+  {% if announcements and announcements|length %}
+  <div id="annList">
+    {% for ann in announcements %}
+      {# derive a created-like timestamp for sorting #}
+      {% set _created = ann.publish_at or ann.created_time %}
+      <div class="announcement-card"
+           data-id="{{ ann.announcement_id if ann.announcement_id is defined else ann.id }}"   {# ← add this for pagination #}
+           data-status="{{ (ann.status or 'draft')|lower }}"
+           data-created="{{ _created.isoformat() if _created else '' }}"
+           data-title="{{ ann.title|e }}"
+           data-content="{{ ann.content|striptags|e }}"
+           data-club="{{ (ann.club.club_name if ann.club is defined and ann.club else ann.club_name if ann.club_name is defined else '')|e }}"
+           data-club-id="{{ ann.club_id or '' }}"
+           data-pinned="{{ '1' if ann.pinned else '0' }}">
+
+        <div class="announcement-header">
+          <h3 class="announcement-title">
+            {% if ann.pinned %}📌 {% endif %}{{ ann.title }}
+          </h3>
+          <div class="announcement-status">{{ (ann.status or 'draft')|capitalize }}</div>
+        </div>
+
+        <div class="announcement-content">
+          {{ ann.content }}
+        </div>
+
+        <div class="announcement-footer">
+          <div class="announcement-date">
+            <span class="icon">📅</span>
+            {% if ann.publish_at %}
+              {{ ann.publish_at.strftime("%b %d, %Y") }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+          <div class="announcement-actions">
+            <a
+              href="#announcementEditModal"
+              class="action-btn js-open-modal js-edit-announcement"
+              data-modal="#announcementEditModal"
+              data-id="{{ ann.announcement_id if ann.announcement_id is defined else ann.id }}"
+              data-title="{{ ann.title|e }}"
+              data-content='{{ ann.content|tojson|safe }}'
+              data-club-id="{{ ann.club_id or '' }}"
+              data-priority="{{ (ann.priority or 'normal')|lower }}"
+              data-audience="{{ (ann.audience or 'all_members')|lower }}"
+              data-status="{{ (ann.status or 'draft')|lower }}"
+              data-publish-date="{{ ann.publish_at.strftime('%Y-%m-%d') if ann.publish_at else '' }}"
+              data-publish-time="{{ ann.publish_at.strftime('%H:%M') if ann.publish_at else '' }}"
+              data-expire-date="{{ ann.expire_at.strftime('%Y-%m-%d') if ann.expire_at else '' }}"
+              data-expire-time="{{ ann.expire_at.strftime('%H:%M') if ann.expire_at else '' }}"
+              data-pinned="{{ '1' if ann.pinned else '0' }}"
+              data-send-email="{{ '1' if ann.send_email else '0' }}"
+            >Edit</a>
+
+            <a href="#" class="delete-btn js-delete-announcement" data-id="{{ ann.announcement_id if ann.announcement_id is defined else ann.id }}" data-name="{{ ann.title }}">Delete</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+    <p class="no-data" style="opacity:.7;">No announcements found.</p>
+    <nav id="annPagination" class="pagination" aria-label="Announcements pagination"></nav>
+
+  {% endif %}
+
+</section>
+
+{% include "components/announcement_modal.html" %}
+{% include "components/announcement_edit_modal.html" %}
+
+{# Hidden delete forms (template-route fallback) #}
+<form id="deleteClubForm" method="POST" action="{{ url_for('delete_club_form') }}" style="display:none;">
+  <input type="hidden" name="club_id" id="deleteClubId">
+</form>
+<form id="deleteEventForm" method="POST" action="{{ url_for('delete_event_form') }}" style="display:none;">
+  <input type="hidden" name="event_id" id="deleteEventId">
+</form>
+<form id="deleteCollegeForm" method="POST" action="{{ url_for('delete_college_form') }}" style="display:none;">
+  <input type="hidden" name="college_id" id="deleteCollegeId">
+</form>
+<form id="deleteCoordinatorForm" method="POST" action="{{ url_for('delete_coordinator_form') }}" style="display:none;">
+  <input type="hidden" name="coordinator_id" id="deleteCoordinatorId">
+</form>
+<form id="deleteAnnouncementForm" method="POST" action="{{ url_for('delete_announcement_form') }}" style="display:none;">
+  <input type="hidden" name="announcement_id" id="deleteAnnouncementId">
+</form>
+
+{# Delete confirmation modal (Flipkart style) #}
+<div id="deleteConfirmModal" class="delete-modal-overlay" hidden>
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <h3>Delete Announcement</h3>
+      <button type="button" class="delete-close" id="closeDeleteModal">×</button>
+    </div>
+    <div class="delete-modal-body">
+      <p>Are you sure you want to delete this announcement?</p>
+    </div>
+    <div class="delete-modal-footer">
+      <button id="confirmDeleteBtn" class="btn btn-danger">DELETE</button>
+      <button id="cancelDeleteBtn" class="btn btn-secondary">CANCEL</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+{% endblock %}

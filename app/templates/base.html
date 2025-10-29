@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}AI Nexus{% endblock %}</title>
     <link rel="stylesheet " href="{{ url_for('static', filename='style.css') }}" />
+    <!---for multiselect in members-->
+    <!-- Choices.js (multi-select enhancement) -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
   </head>
 
   <body>
     <!-- Header -->
     <div class="header">
       <div class="user-info">
-        <div class="notification">🔔</div>
+      <a href="{{ url_for('index') }}" class="notification" title="Go to Dashboard">🔔</a>
         <div class="avatar">N</div>
-        <div class="name">Name</div>
+        <div class="name">Admin</div>
       </div>
     </div>
 
@@ -29,8 +37,8 @@
          class="nav-item {% if request.endpoint=='colleges' %}active{% endif %}">Colleges</a>
       <a href="{{ url_for('coordinators') }}"
          class="nav-item {% if request.endpoint=='coordinators' %}active{% endif %}">Coordinators</a>
-      <a href="{{ url_for('coordinators') }}"
-         class="nav-item {% if request.endpoint=='coordinators' %}active{% endif %}">Members</a>
+      <a href="{{ url_for('members') }}"
+         class="nav-item {% if request.endpoint=='members' %}active{% endif %}">Members</a>
      <a href="{{ url_for('announcements') }}"
          class="nav-item {% if request.endpoint=='announcements' %}active{% endif %}">Announcements</a>
     </div>

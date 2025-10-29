@@ -15,14 +15,14 @@
     </button>
   </div>
 
-  <!-- Toolbar: search (left) + RHS filters (right) -->
-  <div class="clubs-toolbar">
-    <!-- Search -->
-    <form class="search-bar" method="get" action="{{ url_for('clubs') }}">
-      <span class="search-icon">🔍</span>
-      <input type="text" name="q" value="{{ q or '' }}" placeholder="Search Clubs" />
-      <select id="clubChoices" size="6" hidden></select>
-    </form>
+    <!-- Toolbar: search (left) + RHS filters (right) -->
+    <div class="clubs-toolbar">
+      <!-- Search -->
+      <form class="search-bar" method="get" action="{{ url_for('clubs') }}">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="clubSearch" name="q" value="{{ q or '' }}" placeholder="Search Clubs" />
+        <div id="clubChoices" hidden></div>
+      </form>
 
     <!-- Right side filters -->
     <div class="clubs-toolbar-right">
@@ -49,27 +49,28 @@
   <!-- Featured Card (filled by JS) -->
   <div class="featured-chapter-card" id="featuredCard" hidden>
     <div class="featured-chapter-image">
-      <img id="fcImage" alt="" />
+      <img id="feImageUrl" alt="" />
     </div>
 
     <div class="featured-chapter-content">
-      <h3 class="featured-chapter-title" id="fcTitle"></h3>
-      <p class="featured-chapter-description" id="fcDesc"></p>
+      <h3 class="featured-chapter-title" id="feName"></h3>
+      <p class="featured-chapter-description" id="feDescription"></p>
 
       <div class="featured-chapter-stats">
         <div class="featured-chapter-stat">
           <span class="icon">👥</span>
-          <span id="fcMembers">0</span> Members
+          <span id="feMembers">0</span> Members
         </div>
         <div class="featured-chapter-stat">
           <span class="icon">🎓</span>
-          <span id="fcCoordinator">—</span>
+          <span id="feCoordinator">—</span>
         </div>
       </div>
 
       <div class="featured-chapter-actions">
-        <a href="#" class="action-btn" id="fcEditBtn">Edit</a>
-        <a href="#" class="delete-btn" id="fcDeleteBtn">Delete</a>
+        <a href="#" class="action-btn" id="feEditBtn">Edit</a>
+        <a href="#" class="delete-btn" id="feDeleteBtn">Delete</a>
+        <button class="card-close-btn" id="feCloseBtn" title="Close">×</button>
       </div>
     </div>
   </div>
@@ -108,7 +109,7 @@
             <td data-col="coordinator">{{ ch.coordinator or "—" }}</td>
 
             <!-- Members (placeholder until implemented) -->
-            <td>0</td>
+            <td data-col="members">{{ ch.members or 0 }}</td>
 
             <!-- Colleges (placeholder until implemented) -->
             <td>—</td>
@@ -134,17 +135,11 @@
                 data-description="{{ ch.description or '' }}"
                 data-image-url="{{ url_for('static', filename=ch.club_logo) if ch.club_logo else '' }}"
                 data-image-name="{{ ch.club_logo.split('/')[-1] if ch.club_logo else '' }}"
+                data-status="{{ status_txt }}"
               >
                 Edit
               </a>
-
-              {# Optional per-row delete (form submit) — keep commented if using API delete from card #}
-              {#
-              <form method="POST" action="{{ url_for('delete_club_form') }}" class="inline" style="display:inline;">
-                <input type="hidden" name="club_id" value="{{ ch.club_id }}">
-                <button type="submit" class="delete-btn" onclick="return confirm('Delete {{ ch.club_name }}?');">Delete</button>
-              </form>
-              #}
+              <a href="#" class="delete-btn js-delete-club" data-id="{{ ch.club_id }}" data-name="{{ ch.club_name }}">Delete</a>
             </td>
           </tr>
         {% endfor %}
@@ -155,26 +150,40 @@
       {% endif %}
       </tbody>
     </table>
+        <nav id="clubsPagination" class="pagination" aria-label="Clubs pagination"></nav>
+
   </div>
 </section>
 
-{# Hidden delete form (template-route fallback) #}
+{# Hidden delete forms (template-route fallback) #}
 <form id="deleteClubForm" method="POST" action="{{ url_for('delete_club_form') }}" style="display:none;">
   <input type="hidden" name="club_id" id="deleteClubId">
+</form>
+<form id="deleteEventForm" method="POST" action="{{ url_for('delete_event_form') }}" style="display:none;">
+  <input type="hidden" name="event_id" id="deleteEventId">
+</form>
+<form id="deleteCollegeForm" method="POST" action="{{ url_for('delete_college_form') }}" style="display:none;">
+  <input type="hidden" name="college_id" id="deleteCollegeId">
+</form>
+<form id="deleteCoordinatorForm" method="POST" action="{{ url_for('delete_coordinator_form') }}" style="display:none;">
+  <input type="hidden" name="coordinator_id" id="deleteCoordinatorId">
+</form>
+<form id="deleteAnnouncementForm" method="POST" action="{{ url_for('delete_announcement_form') }}" style="display:none;">
+  <input type="hidden" name="announcement_id" id="deleteAnnouncementId">
 </form>
 
 {# Delete confirmation modal (Flipkart style) #}
 <div id="deleteConfirmModal" class="delete-modal-overlay" hidden>
   <div class="delete-modal">
     <div class="delete-modal-header">
-      <h3>Remove Club</h3>
+      <h3>Delete Club</h3>
       <button type="button" class="delete-close" id="closeDeleteModal">×</button>
     </div>
     <div class="delete-modal-body">
-      <p>Are you sure you want to remove this club?</p>
+      <p>Are you sure you want to Delete this club?</p>
     </div>
     <div class="delete-modal-footer">
-      <button id="confirmDeleteBtn" class="btn btn-danger">REMOVE</button>
+      <button id="confirmDeleteBtn" class="btn btn-danger">DELETE</button>
       <button id="cancelDeleteBtn" class="btn btn-secondary">CANCEL</button>
     </div>
   </div>
@@ -187,103 +196,4 @@
 
 {% block scripts %}
   <script src="{{ url_for('static', filename='scripts.js') }}"></script>
-
-  <style>
-    [hidden], .featured-chapter-card[hidden] { display: none !important; }
-    .search-bar { position: relative; }
-
-    /* Search dropdown styling */
-    #clubChoices {
-      position: absolute;
-      top: 110%;
-      left: 0; right: 0;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      z-index: 50;
-      max-height: 180px;
-      overflow-y: auto;
-      font-size: 14px;
-    }
-    #clubChoices option {
-      padding: 6px 10px;
-      cursor: pointer;
-    }
-    #clubChoices option:hover,
-    #clubChoices option:checked {
-      background-color: #1a8782;
-      color: #fff;
-    }
-
-    /* --- Delete confirmation modal --- */
-    .delete-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-    .delete-modal {
-      width: 360px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 6px 20px rgba(0,0,0,.25);
-      padding: 16px 16px 14px;
-      animation: popIn .18s ease-out;
-    }
-    @keyframes popIn {
-      from { transform: scale(.96); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
-    .delete-modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-    }
-    .delete-modal-header h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-    .delete-close {
-      border: 0;
-      background: transparent;
-      font-size: 20px;
-      line-height: 1;
-      cursor: pointer;
-      padding: 4px 8px;
-    }
-    .delete-modal-body { font-size: 14px; color: #444; }
-    .delete-modal-footer {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 14px;
-    }
-    .btn-danger {
-      background: #2874f0;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-danger:hover { background: #1956c1; }
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-secondary:hover { background: #d1d5db; }
-  </style>
 {% endblock %}

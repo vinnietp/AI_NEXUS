@@ -38,6 +38,7 @@
           value="{{ q or '' }}"
           placeholder="Search Colleges"
         />
+        <div id="collegeChoices" hidden></div>
       </form>
 
       <!-- IMPORTANT: same class as clubs so CSS matches -->
@@ -62,6 +63,36 @@
       </div>
     </div>
 
+  <!-- Featured Card (filled by JS) -->
+  <div class="featured-chapter-card" id="featuredCollegeCard" hidden>
+    <button class="card-close-btn" id="fcCloseBtn" title="Close">×</button>
+    <div class="featured-chapter-image">
+      <img id="fcImage" alt="" />
+    </div>
+
+    <div class="featured-chapter-content">
+      <h3 class="featured-chapter-title" id="fcName"></h3>
+      <p class="featured-chapter-description" id="fcLocation"></p>
+
+      <div class="featured-chapter-stats">
+        <div class="featured-chapter-stat">
+          <span class="icon">📧</span>
+          <span id="fcEmail">—</span>
+        </div>
+        <div class="featured-chapter-stat">
+          <span class="icon">📊</span>
+          <span id="fcStatus">—</span>
+        </div>
+      </div>
+
+      <div class="featured-chapter-actions">
+        <a href="#" class="action-btn" id="fcEditBtn">Edit</a>
+        <a href="#" class="delete-btn" id="fcDeleteBtn">Delete</a>
+      </div>
+    </div>
+  </div>
+  <!-- Featured Card end -->
+
     <!-- All Colleges Table -->
     <div class="table-container">
       <div class="table-header">All Colleges</div>
@@ -83,9 +114,12 @@
           {% for c in colleges %}
             {% set _status = (c.status or 'active')|lower %}
             <tr
+                     data-id="{{ c.college_id }}"              {# <-- add this #}
               data-name="{{ c.college_name }}"
               data-status="{{ _status }}"
               data-members="{{ c.members_count or 0 }}"
+              data-location="{{ c.location or '' }}"
+              data-email="{{ c.email or '' }}"
               data-created="{{ (c.created_time.isoformat() if c.created_time else '%010d'|format(c.college_id)) }}"
             >
               <td data-col="name">{{ c.college_name }}</td>
@@ -115,6 +149,7 @@
                   data-description="{{ c.description or '' }}"
                   data-status="{{ _status }}"
                 >Edit</a>
+                <a href="#" class="delete-btn js-delete-college" data-id="{{ c.college_id }}" data-name="{{ c.college_name }}">Delete</a>
               </td>
             </tr>
           {% endfor %}
@@ -125,11 +160,47 @@
         {% endif %}
         </tbody>
       </table>
+            <nav id="collegesPagination" class="pagination" aria-label="Colleges pagination"></nav>
+
     </div>
   </section>
 
   {% include "components/college_modal.html" %}
   {% include "components/college_edit_modal.html" %}
+
+{# Hidden delete forms (template-route fallback) #}
+<form id="deleteClubForm" method="POST" action="{{ url_for('delete_club_form') }}" style="display:none;">
+  <input type="hidden" name="club_id" id="deleteClubId">
+</form>
+<form id="deleteEventForm" method="POST" action="{{ url_for('delete_event_form') }}" style="display:none;">
+  <input type="hidden" name="event_id" id="deleteEventId">
+</form>
+<form id="deleteCollegeForm" method="POST" action="{{ url_for('delete_college_form') }}" style="display:none;">
+  <input type="hidden" name="college_id" id="deleteCollegeId">
+</form>
+<form id="deleteCoordinatorForm" method="POST" action="{{ url_for('delete_coordinator_form') }}" style="display:none;">
+  <input type="hidden" name="coordinator_id" id="deleteCoordinatorId">
+</form>
+<form id="deleteAnnouncementForm" method="POST" action="{{ url_for('delete_announcement_form') }}" style="display:none;">
+  <input type="hidden" name="announcement_id" id="deleteAnnouncementId">
+</form>
+
+{# Delete confirmation modal (Flipkart style) #}
+<div id="deleteConfirmModal" class="delete-modal-overlay" hidden>
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <h3>Delete College</h3>
+      <button type="button" class="delete-close" id="closeDeleteModal">×</button>
+    </div>
+    <div class="delete-modal-body">
+      <p>Are you sure you want to delete this college?</p>
+    </div>
+    <div class="delete-modal-footer">
+      <button id="confirmDeleteBtn" class="btn btn-danger">DELETE</button>
+      <button id="cancelDeleteBtn" class="btn btn-secondary">CANCEL</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

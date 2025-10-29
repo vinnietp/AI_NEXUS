@@ -5,6 +5,14 @@ db = SQLAlchemy()
 
 #########33
 
+# -------------------------- Association table for many-to-many between Member and Club --------------------------
+member_clubs = db.Table('member_clubs',
+    db.Column('member_id', db.Integer, db.ForeignKey('members.member_id'), primary_key=True),
+    db.Column('club_id', db.Integer, db.ForeignKey('clubs.club_id'), primary_key=True),
+    db.Column('joined_date', db.DateTime, default=datetime.now, nullable=False)
+)
+
+
 class College(db.Model):
     __tablename__ = "colleges"
 
@@ -20,9 +28,10 @@ class College(db.Model):
     # Existing fields (keep as you had)
     email    = db.Column(db.String(120))
     location = db.Column(db.String(120))
-    status   = db.Column(db.String(20), default="active")  # active|inactive
+    status = db.Column(db.String(20), default="active", nullable=False)  # active|inactive
     created_time = db.Column(db.DateTime, default=datetime.now)  # naive IST by convention
-    status = db.Column(db.String(20), default="active", nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     coordinators = db.relationship(
         "Coordinator",
@@ -40,22 +49,29 @@ class Club(db.Model):
     club_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     club_name = db.Column(db.String(100), nullable=False)
     club_category = db.Column(db.String(50))
-    coordinator = db.Column(db.String(100))
-    coordinator_type = db.Column(db.String(50))
     club_logo = db.Column(db.String(255))
     description = db.Column(db.Text)
     created_time = db.Column(db.DateTime, default=datetime.now,nullable=False)
     updated_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now,nullable=False)
-
-    # ✅ New column
     status = db.Column(db.String(20), default="active", nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Relationships
+    # 👇 ADD THIS to match Member.clubs back_populates="clubs"
+    members = db.relationship(
+        "Member",
+        secondary=member_clubs,
+        back_populates="clubs",
+        lazy="selectin",
+    )
+
     events = db.relationship("Event", back_populates="club", cascade="all,delete-orphan")
     coordinators = db.relationship(
         "Coordinator",
         back_populates="club",
-        cascade="all,delete-orphan"
+        cascade="all,delete-orphan",
+        foreign_keys="Coordinator.club_id"
     )
 
     def __repr__(self):
@@ -83,7 +99,7 @@ class Event(db.Model):
 
     # Schedule (store UTC; convert to/from local in routes)
     start_at = db.Column(db.DateTime, nullable=False)  # UTC
-    end_at   = db.Column(db.DateTime, nullable=False)  # UTC
+    end_at   = db.Column(db.DateTime, nullable=True)  # UTC
 
     # Media & meta
     event_image = db.Column(db.String(255))
@@ -94,6 +110,8 @@ class Event(db.Model):
     # Audit
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     updated_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Relationship
     club = db.relationship("Club", back_populates="events")
@@ -132,20 +150,50 @@ class Coordinator(db.Model):
     description       = db.Column(db.Text)
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     updated_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
-
     status = db.Column(db.String(20), default="active", nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
 
     # <-- IMPORTANT: use back_populates to pair with the parent sides above
-    club    = db.relationship("Club", back_populates="coordinators")
+    club    = db.relationship("Club", back_populates="coordinators", foreign_keys=[club_id])
     college = db.relationship("College", back_populates="coordinators")
 
     # def __repr__(self):
     #     return f"<Coordinator {self.coordinator_id} {self.coordinator_name!r} ch={self.club_id}>"
 
 
+# Member (separate from Coordinator)
+# --------------------------
+class Member(db.Model):
+    __tablename__ = "members"
 
-# models.py
+    member_id   = db.Column(db.Integer, primary_key=True)
+    member_name = db.Column(db.String(100), nullable=False)
+
+    college_id = db.Column(
+        db.Integer,
+        db.ForeignKey("colleges.college_id", ondelete="SET NULL"),
+        nullable=True
+    )
+
+    faculty_dept = db.Column(db.String(100))
+    email        = db.Column(db.String(120))
+    phone        = db.Column(db.String(20))
+    member_image = db.Column(db.String(255))
+    description  = db.Column(db.Text)
+    created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    updated_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
+
+    status = db.Column(db.String(20), default="active", nullable=False)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    clubs   = db.relationship("Club", secondary="member_clubs", back_populates="members")
+    college = db.relationship("College", backref="members")
+
+
 
 class Announcement(db.Model):
     __tablename__ = "announcements"
@@ -169,9 +217,9 @@ class Announcement(db.Model):
 
     created_at= db.Column(db.DateTime, default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
-
-    # created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
-    # updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
-
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
     # relationships (optional)
     club = db.relationship("Club", backref="announcements", lazy=True)
+
+

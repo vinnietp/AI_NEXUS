@@ -1,0 +1,103 @@
+<!-- templates/components/member_modal.html -->
+<div id="memberModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-backdrop" data-modal-close></div>
+
+  <div class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="memberModalTitle" aria-describedby="memberModalDesc" tabindex="-1">
+    <div class="modal-header">
+      <h2 class="modal-title" id="memberModalTitle">Add Member</h2>
+      <button type="button" class="close-btn js-close-modal" aria-label="Close">×</button>
+    </div>
+
+    <form action="{{ url_for('create_member') }}" method="POST" enctype="multipart/form-data" novalidate>
+      <div class="form-row">
+        <!-- Left column -->
+        <div class="form-col">
+          <!-- Member Name (required) -->
+          <div class="form-group">
+            <label for="memberName">Member Name <span aria-hidden="true">*</span></label>
+            <input type="text" id="memberName" name="member_name"
+                   required minlength="2" maxlength="100" autocomplete="name" autofocus />
+          </div>
+
+          <!-- Clubs (multi-select with tags + search via Choices.js) -->
+          <div class="form-group">
+            <label for="memberClubSelect">Clubs <span aria-hidden="true">*</span></label>
+            <select id="memberClubSelect" name="club_ids" multiple size="5">
+              {% for club in clubs %}
+                <option value="{{ club.club_id }}">{{ club.club_name }}</option>
+              {% else %}
+                <option disabled>(No clubs available)</option>
+              {% endfor %}
+            </select>
+            <small class="hint">Tip: you can select multiple clubs.</small>
+          </div>
+
+          <!-- College Name (optional select) -->
+          <div class="form-group">
+            <label for="memberCollegeSelect">College Name (optional)</label>
+            <select id="memberCollegeSelect" name="college_id">
+                 <option value="">Select College</option>
+              {% for college in colleges %}
+                <option value="{{ college.college_id }}">{{ college.college_name }}</option>
+              {% else %}
+                <option value="" disabled>(No colleges available)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Faculty/Dept (text) -->
+          <div class="form-group">
+            <label for="memberFacultyDept">Faculty/Dept</label>
+            <input type="text" id="memberFacultyDept" name="faculty_dept"
+                   maxlength="100" placeholder="e.g., CSE / ECE / Design" />
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="form-col">
+          <!-- Email (optional) -->
+          <div class="form-group">
+            <label for="memberEmail">Email (optional)</label>
+            <input type="email" id="memberEmail" name="email"
+                   maxlength="120" placeholder="name@example.com" autocomplete="email" />
+          </div>
+
+          <!-- Phone (optional, lightly cleaned) -->
+          <div class="form-group">
+            <label for="memberPhone">Phone (optional)</label>
+            <input type="tel" id="memberPhone" name="phone"
+                   maxlength="20" inputmode="numeric" pattern="[0-9\-+\s()]*"
+                   placeholder="+91 98765 43210" autocomplete="tel" />
+          </div>
+
+          <!-- Member Image (optional) -->
+          <div class="form-group">
+            <label for="memberImage">Member Image (optional)</label>
+            <div class="file-input-wrapper">
+              <input type="file" id="memberImage" name="member_image"
+                     class="file-input" accept="image/*" />
+              <label for="memberImage" class="file-input-label">Choose File</label>
+              <span class="file-name">No file chosen</span>
+              <img class="file-preview" alt="Image preview"
+                   style="display:none; max-width:140px; max-height:140px; margin-top:8px; border:1px solid #eee; border-radius:8px;" />
+            </div>
+            <div class="file-hint">Recommended: square 300×300 px (PNG/JPG).</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="memberDesc">Description</label>
+        <textarea id="memberDesc" name="description" rows="4" maxlength="1000"
+                  placeholder="Brief profile or responsibilities"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="submit-btn">Add</button>
+        <button type="button" class="btn js-close-modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

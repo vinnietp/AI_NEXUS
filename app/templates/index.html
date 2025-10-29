@@ -13,7 +13,11 @@
   Create New Club
 </button>
       {% include "components/club_modal.html" %}
-      <button class="btn btn-primary">Schedule Event</button>
+      <button type="button"
+        class="btn btn-primary js-open-modal"
+        data-modal="#eventModal">
+  Schedule Event
+</button>
     </div>
   </div>
 
@@ -26,7 +30,7 @@
     </div>
     <div class="stat-card">
       <h3>Total Members</h3>
-      <div class="value">250</div>
+      <div class="value">{{ total_members or 0 }}</div>
       <div class="icon">👥</div>
     </div>
     <div class="stat-card">
@@ -99,7 +103,7 @@
     <div class="section">
       <div class="section-header">
         <h3>Upcoming Events</h3>
-        <a href="#" class="view-all">View All</a>
+        <a href="{{ url_for('events') }}" class="view-all">View All</a>
       </div>
        {% for ev in upcoming_events[:1] %}
       <div class="event-card">
@@ -112,7 +116,7 @@
           <div class="event-description">
           {{ ev.description }}
           </div>
-          <a href="#" class="event-btn">View Details</a>
+          <a href="{{ url_for('events') }}" class="event-btn">View Details</a>
         </div>
       </div>
         {% else %}
@@ -127,3 +131,5 @@
 {% block scripts %}
   <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 {% endblock %}
+
+{% include "components/event_modal.html" %}

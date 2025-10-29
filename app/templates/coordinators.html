@@ -29,6 +29,7 @@
     <form class="search-bar" method="get" action="{{ url_for('coordinators') }}">
       <span class="search-icon">🔍</span>
       <input id="coordinatorSearch" name="q" value="{{ q or '' }}" type="text" placeholder="Search Coordinator" aria-label="Search Coordinator" />
+      <div id="coordinatorChoices" hidden></div>
     </form>
 
     <div class="clubs-toolbar-right">
@@ -59,6 +60,44 @@
     </div>
   </div>
 
+  <!-- Featured Card (filled by JS) -->
+  <div class="featured-chapter-card" id="featuredCoordinatorCard" hidden>
+    <button class="card-close-btn" id="fcoCloseBtn" title="Close">×</button>
+    <div class="featured-chapter-image">
+      <img id="fcoImageUrl" alt="" />
+    </div>
+
+    <div class="featured-chapter-content">
+      <h3 class="featured-chapter-title" id="fcoName"></h3>
+      <p class="featured-chapter-description" id="fcoDescription"></p>
+
+      <div class="featured-chapter-stats">
+        <div class="featured-chapter-stat">
+          <span class="icon">🏫</span>
+          <span id="fcoClub">—</span>
+        </div>
+        <div class="featured-chapter-stat">
+          <span class="icon">🏢</span>
+          <span id="fcoDepartment">—</span>
+        </div>
+        <div class="featured-chapter-stat">
+          <span class="icon">📧</span>
+          <span id="fcoEmail">—</span>
+        </div>
+        <div class="featured-chapter-stat">
+          <span class="icon">📱</span>
+          <span id="fcoPhone">—</span>
+        </div>
+      </div>
+
+      <div class="featured-chapter-actions">
+        <a href="#" class="action-btn" id="fcoEditBtn">Edit</a>
+        <a href="#" class="delete-btn" id="fcoDeleteBtn">Delete</a>
+      </div>
+    </div>
+  </div>
+  <!-- Featured Card end -->
+
   <!-- Table -->
   <div class="table-container">
     <div class="table-header">Active Coordinators</div>
@@ -78,6 +117,7 @@
           {% for c in coordinators %}
             {# created fallback: zero-padded id if created_time not present #}
             <tr
+                    data-id="{{ c.id }}"                          {# <-- add this #}
               data-name="{{ c.name }}"
               data-club="{{ c.club }}"
               data-club-id="{{ c.club_id }}"
@@ -117,6 +157,7 @@
                   data-image-url="{{ url_for('static', filename=c.image_path) if c.image_path else '' }}"
                   data-image-name="{{ c.image_path.split('/')[-1] if c.image_path else '' }}"
                 >Edit</a>
+                <a href="#" class="delete-btn js-delete-coordinator" data-id="{{ c.id }}" data-name="{{ c.name }}">Delete</a>
               </td>
             </tr>
           {% endfor %}
@@ -129,10 +170,46 @@
         {% endif %}
       </tbody>
     </table>
+              <nav id="coordinatorsPagination" class="pagination" aria-label="Coordinators pagination"></nav>
+
   </div>
 
   {% include "components/coordinator_modal.html" %}
   {% include "components/coordinator_edit_modal.html" %}
+
+{# Hidden delete forms (template-route fallback) #}
+<form id="deleteClubForm" method="POST" action="{{ url_for('delete_club_form') }}" style="display:none;">
+  <input type="hidden" name="club_id" id="deleteClubId">
+</form>
+<form id="deleteEventForm" method="POST" action="{{ url_for('delete_event_form') }}" style="display:none;">
+  <input type="hidden" name="event_id" id="deleteEventId">
+</form>
+<form id="deleteCollegeForm" method="POST" action="{{ url_for('delete_college_form') }}" style="display:none;">
+  <input type="hidden" name="college_id" id="deleteCollegeId">
+</form>
+<form id="deleteCoordinatorForm" method="POST" action="{{ url_for('delete_coordinator_form') }}" style="display:none;">
+  <input type="hidden" name="coordinator_id" id="deleteCoordinatorId">
+</form>
+<form id="deleteAnnouncementForm" method="POST" action="{{ url_for('delete_announcement_form') }}" style="display:none;">
+  <input type="hidden" name="announcement_id" id="deleteAnnouncementId">
+</form>
+
+{# Delete confirmation modal (Flipkart style) #}
+<div id="deleteConfirmModal" class="delete-modal-overlay" hidden>
+  <div class="delete-modal">
+    <div class="delete-modal-header">
+      <h3>Delete Coordinator</h3>
+      <button type="button" class="delete-close" id="closeDeleteModal">×</button>
+    </div>
+    <div class="delete-modal-body">
+      <p>Are you sure you want to delete this coordinator?</p>
+    </div>
+    <div class="delete-modal-footer">
+      <button id="confirmDeleteBtn" class="btn btn-danger">DELETE</button>
+      <button id="cancelDeleteBtn" class="btn btn-secondary">CANCEL</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

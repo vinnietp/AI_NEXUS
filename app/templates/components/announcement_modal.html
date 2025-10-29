@@ -64,16 +64,11 @@
               </div>
               <div class="form-col">
                 <select id="publish_time" name="publish_time" aria-label="Publish Time">
-                  <option value="">--</option>
-                  {% for h in range(0, 24) %}
-                    {% for m in [0, 30] %}
-                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
-                      {% set ampm = "AM" if h < 12 else "PM" %}
-                      {% set label = "%02d:%02d %s" % (hour12, m, ampm) %}
-                      {% set value = "%02d:%02d" % (h, m) %}
-                      <option value="{{ value }}" {% if publish_time == value %}selected{% endif %}>
-                        {{ label }}
-                      </option>
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}"{% if hour == 12 and minute == 0 %} selected{% endif %}>{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
                   {% endfor %}
                 </select>
@@ -92,17 +87,12 @@
                 <input type="date" name="expire_date" aria-label="Expiration Date" placeholder="dd-mm-yyyy">
               </div>
               <div class="form-col">
-                <select id="expire_time" name="expire_time" aria-label="Expiration Time">
-                  <option value="">--</option>
-                  {% for h in range(0, 24) %}
-                    {% for m in [0, 30] %}
-                      {% set hour12 = (h % 12) if (h % 12) != 0 else 12 %}
-                      {% set ampm = "AM" if h < 12 else "PM" %}
-                      {% set label = "%02d:%02d %s" % (hour12, m, ampm) %}
-                      {% set value = "%02d:%02d" % (h, m) %}
-                      <option value="{{ value }}" {% if expire_time == value %}selected{% endif %}>
-                        {{ label }}
-                      </option>
+                <select id="expire_time" name="expire_time" aria-label="Expire Time">
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}"{% if hour == 12 and minute == 0 %} selected{% endif %}>{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
                   {% endfor %}
                 </select>
@@ -170,3 +160,5 @@
     </form>
   </div>
 </div>
+
+

@@ -18,11 +18,6 @@
           </div>
 
           <div class="form-group">
-            <label for="editCoordinator">Coordinator</label>
-            <input type="text" id="editCoordinator" name="coordinator" />
-          </div>
-
-          <div class="form-group">
             <label for="editClubLogo">Club logo</label>
             <div class="file-input-wrapper">
               <input type="file" id="editClubLogo" name="club_logo" class="file-input" accept="image/*" />
@@ -40,20 +35,20 @@
             <label for="editCategory">Category</label>
             <input type="text" id="editCategory" name="club_category" />
           </div>
-
-          <div class="form-group">
-            <label for="editCoordinatorType">Type of Coordinator</label>
-            <select id="editCoordinatorType" name="coordinator_type">
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-            </select>
-          </div>
         </div>
       </div>
 
       <div class="form-group">
         <label for="editDescription">Description</label>
         <textarea id="editDescription" name="description"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="editClubStatus">Status</label>
+        <select id="editClubStatus" name="status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
       </div>
 
       <button type="submit" class="submit-btn">Save changes</button>
