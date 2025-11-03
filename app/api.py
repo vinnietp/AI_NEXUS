@@ -4,7 +4,6 @@ from uuid import uuid4
 from math import ceil
 import os
 from typing import Any
-
 from flask import Blueprint, jsonify, request, url_for, current_app
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
@@ -207,7 +206,7 @@ def api_dashboard():
 
 
 # =====================================================================
-# Clubs (GET/POST/PUT/DELETE/RESTORE)
+# Clubs (GET/POST/PUT/DELETE/
 # =====================================================================
 @api.get("/clubs")
 def api_list_clubs():
@@ -406,7 +405,7 @@ def api_delete_club(club_id):
 
 
 # =====================================================================
-# Events (GET/POST/PUT/DELETE/RESTORE)
+# Events (GET/POST/PUT/DELETE
 # =====================================================================
 @api.get("/events")
 def api_list_events():
@@ -983,7 +982,7 @@ def api_list_coordinators():
     faculty_like_count = (
         db.session.query(Coordinator)
         .filter(Coordinator.is_deleted.is_(False),
-                Coordinator.role_type.in_(["faculty", "lead", "co-lead", "mentor"]),
+                Coordinator.role_type != "student",
                 Coordinator.status == "active")
         .count()
     )

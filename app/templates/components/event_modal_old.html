@@ -1,3 +1,4 @@
+
 <!-- Create New Event Modal -->
 <div id="eventModal" class="modal-overlay" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
@@ -6,11 +7,10 @@
       <a href="#" class="close-btn js-close-modal" aria-label="Close">×</a>
     </div>
 
-    <form id="createEventForm" action="{{ url_for('create_event') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('create_event') }}" method="POST" enctype="multipart/form-data">
       <input type="hidden" name="source" value="{{ request.endpoint }}">
 
       <div class="form-row">
-        <!-- Left column -->
         <div class="form-col">
           <div class="form-group">
             <label for="eventName">Event Name</label>
@@ -19,7 +19,7 @@
 
           <div class="form-group">
             <label for="organisingClub">Organising club</label>
-            <select id="organisingClub" name="organising_club" class="browser-default" required>
+            <select id="organisingClub" name="organising_club" required>
               {% if clubs %}
                 <option value="" disabled selected>Select club</option>
                 {% for ch in clubs %}
@@ -42,9 +42,8 @@
           </div>
         </div>
 
-        <!-- Right column -->
         <div class="form-col">
-          <!-- Start (date + AM/PM combobox) -->
+          <!-- Start (date + time selects) -->
           <div class="form-group">
             <label>Start Date &amp; Time</label>
             <div class="form-row">
@@ -52,42 +51,21 @@
                 <input type="date" name="start_date" aria-label="Start Date" required>
               </div>
               <div class="form-col">
-                <div class="combo" data-prefix="start">
-                  <!-- visible editable field (AM/PM; no name) -->
-                  <input
-                    id="start_time_combo"
-                    class="combo-input"
-                    aria-label="Start Time (AM/PM)"
-                    placeholder="hh:mm AM/PM"
-                    autocomplete="off"
-                    role="combobox"
-                    aria-expanded="false"
-                    aria-controls="start_time_list"
-                    aria-autocomplete="list"
-                    required>
-                  <!-- hidden field actually submitted (24h HH:MM) -->
-                  <input type="hidden" id="start_time" name="start_time">
-
-                  <!-- full AM/PM quick list -->
-                  <ul id="start_time_list" class="combo-list" role="listbox" hidden>
-                    {% for hour in range(0,24) %}
-                      {% for minute in [0,30] %}
-                        {% set hour12 = (hour % 12) or 12 %}
-                        {% set ampm = 'AM' if hour < 12 else 'PM' %}
-                        {% set mm = "%02d" % minute %}
-                        <li role="option" class="combo-item" data-value="{{ "%02d:%s" % (hour, mm) }}">
-                          {{ "%d:%s %s" % (hour12, mm, ampm) }}
-                        </li>
-                      {% endfor %}
+                <select id="start_time" name="start_time" aria-label="Start Time" required>
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}">{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
-                  </ul>
-                </div>
+                  {% endfor %}
+                </select>
               </div>
             </div>
-            <div class="input-help">Type exact minutes or choose from the list.</div>
+            <div class="input-help">Choose start time.</div>
           </div>
 
-          <!-- End (date + AM/PM combobox) -->
+          <!-- End (date + time selects) -->
           <div class="form-group">
             <label>End Date &amp; Time</label>
             <div class="form-row">
@@ -95,32 +73,15 @@
                 <input type="date" name="end_date" aria-label="End Date">
               </div>
               <div class="form-col">
-                <div class="combo" data-prefix="end">
-                  <input
-                    id="end_time_combo"
-                    class="combo-input"
-                    aria-label="End Time (AM/PM)"
-                    placeholder="hh:mm AM/PM"
-                    autocomplete="off"
-                    role="combobox"
-                    aria-expanded="false"
-                    aria-controls="end_time_list"
-                    aria-autocomplete="list">
-                  <input type="hidden" id="end_time" name="end_time">
-
-                  <ul id="end_time_list" class="combo-list" role="listbox" hidden>
-                    {% for hour in range(0,24) %}
-                      {% for minute in [0,30] %}
-                        {% set hour12 = (hour % 12) or 12 %}
-                        {% set ampm = 'AM' if hour < 12 else 'PM' %}
-                        {% set mm = "%02d" % minute %}
-                        <li role="option" class="combo-item" data-value="{{ "%02d:%s" % (hour, mm) }}">
-                          {{ "%d:%s %s" % (hour12, mm, ampm) }}
-                        </li>
-                      {% endfor %}
+                <select id="end_time" name="end_time" aria-label="End Time">
+                  {% for hour in range(0,24) %}
+                    {% for minute in range(0,60,30) %}
+                      {% set hour12 = (hour % 12) or 12 %}
+                      {% set ampm = 'AM' if hour < 12 else 'PM' %}
+                      <option value="{{ "%02d:%02d" % (hour, minute) }}">{{ "%d:%02d %s" % (hour12, minute, ampm) }}</option>
                     {% endfor %}
-                  </ul>
-                </div>
+                  {% endfor %}
+                </select>
               </div>
             </div>
             <div class="input-help">End time must be after start time.</div>
@@ -145,7 +106,7 @@
 
           <div class="form-group">
             <label for="status">Status</label>
-            <select id="status" name="status" class="browser-default">
+            <select id="status" name="status">
               <option value="upcoming" selected>Upcoming</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
@@ -163,8 +124,35 @@
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function ampmTo24(s) {
+    if (!s) return "";
+    const m = s.trim().toUpperCase();
+    const r = m.match(/^(0?[1-9]|1[0-2]):([0-5]\d)\s?(AM|PM)$/);
+    if (!r) return ""; // invalid; form's pattern should prevent this
+    let h = parseInt(r[1], 10);
+    const mm = r[2];
+    const ap = r[3];
+    if (h === 12) h = 0;            // 12:xx AM -> 00:xx
+    if (ap === 'PM') h += 12;       // add 12 for PM (except 12 PM handled by above)
+    const hh = String(h).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
 
-<!-- Styles -->
+  const form = document.querySelector('#eventModal form');
+  form.addEventListener('submit', function () {
+    // Start time
+    const sInp = document.getElementById('start_time_ampm');
+    const sHidden = document.getElementById('start_time');
+    sHidden.value = ampmTo24(sInp.value);
 
+    // End time (optional)
+    const eInp = document.getElementById('end_time_ampm');
+    const eHidden = document.getElementById('end_time');
+    eHidden.value = ampmTo24(eInp.value);
+  });
+});
+</script>
 
 

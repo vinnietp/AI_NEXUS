@@ -1,5 +1,6 @@
 
 // === TIME SELECT HELPERS ===
+//Do not accept AM,PM. Expect 24 hrs
 function updateTimeHidden(hourId, minuteId, timeId) {
   const hourEl = document.getElementById(hourId);
   const minuteEl = document.getElementById(minuteId);
@@ -11,6 +12,8 @@ function updateTimeHidden(hourId, minuteId, timeId) {
   }
 }
 
+//It converts 12-hour + AM/PM to 24-hour, then writes the hidden "HH:MM" value.
+//"1:30 PM" -> "13:30"
 function updateTimeHidden12(hourId, minuteId, ampmId, timeId) {
   const hourEl = document.getElementById(hourId);
   const minuteEl = document.getElementById(minuteId);
@@ -27,6 +30,120 @@ function updateTimeHidden12(hourId, minuteId, ampmId, timeId) {
   }
 }
 
+//Helpers for editing start and end date in events modal
+ //Convert AM/PM format ("10:30 PM") → 24h ("22:30")
+function ampmTo24(txt) {
+  if (!txt) return "";
+  const m = txt.trim().toUpperCase().match(/^(0?[1-9]|1[0-2]):([0-5]\d)\s?(AM|PM)$/);
+  if (!m) return "";
+  let h = parseInt(m[1], 10), mm = m[2], ap = m[3];
+  if (h === 12) h = 0;
+  if (ap === 'PM') h += 12;
+  return String(h).padStart(2, '0') + ':' + mm;
+}
+
+/**
+ * Convert 24h format ("22:30") → AM/PM ("10:30 PM")
+ toAMPM("15:45"); // "3:45 PM"
+ */
+function toAMPM(hhmm) {
+  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return "";
+  const [h, m] = hhmm.split(':').map(n => parseInt(n, 10));
+  const ap = h < 12 ? 'AM' : 'PM';
+  const h12 = (h % 12) || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ap}`;
+}
+
+/**
+ * Prefill a combobox pair.
+ * (prefix: 'start' | 'end' | 'edit_start' | 'edit_end')
+ setTimeCombo('edit_start', '14:45')=>"2:45 PM">
+ */
+function setTimeCombo(prefix, hhmm) {
+  const vis = document.getElementById(`${prefix}_time_combo`);
+  const hid = document.getElementById(`${prefix}_time`);
+  if (!vis || !hid) return;
+  if (!hhmm) { vis.value = ''; hid.value = ''; return; }
+  hid.value = hhmm;
+  vis.value = toAMPM(hhmm);
+}
+
+/**
+ * Wire an AM/PM combobox dropdown with free typing + suggestions
+ // Sets up a custom time dropdown (combo box) for AM/PM inputs.
+ */
+function wireCombo(prefix) {
+  const wrap   = document.querySelector(`.combo[data-prefix="${prefix}"]`);
+  if (!wrap) return;
+  const input  = wrap.querySelector('.combo-input');
+  const list   = wrap.querySelector('.combo-list');
+  const items  = Array.from(list.querySelectorAll('.combo-item'));
+  const hidden = document.getElementById(`${prefix}_time`);
+  let idx = -1;
+
+//Shows dropdown
+  function openList() { list.hidden = false; input.setAttribute('aria-expanded','true'); }
+  //Hides dropdown
+  function closeList() { list.hidden = true; input.setAttribute('aria-expanded','false'); idx = -1; items.forEach(i=>i.removeAttribute('aria-selected')); }
+  //Finds items that are still visible
+  function visibleItems() { return items.filter(i => i.style.display !== 'none'); }
+  //Shows all items again
+  function clearFilter() { items.forEach(i => i.style.display = ''); }
+  //Updates input + hidden values
+  function selectItem(li) { input.value = li.textContent.trim(); hidden.value = li.dataset.value; closeList(); }
+
+
+  // show list on focus
+  // --- Input interactions for the combo box ---
+// • Focus: open dropdown and show all options
+// • Typing: filter list items by typed text
+// • Arrow keys: navigate between items
+// • Enter: select highlighted or typed time
+// • Escape: close dropdown
+  input.addEventListener('focus', () => { clearFilter(); openList(); input.select(); });
+  // filter suggestions as user types
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase();
+    items.forEach(i => i.style.display = i.textContent.toLowerCase().includes(q) ? '' : 'none');
+    openList();
+    hidden.value = "";
+  });
+
+  // arrow navigation + enter/escape
+  input.addEventListener('keydown', (e) => {
+    const vis = visibleItems();
+    if (e.key === 'ArrowDown') {
+      e.preventDefault(); openList(); idx = Math.min(idx + 1, vis.length - 1);
+      vis.forEach(i=>i.removeAttribute('aria-selected'));
+      if (idx >= 0) { vis[idx].setAttribute('aria-selected','true'); vis[idx].scrollIntoView({block:'nearest'}); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault(); idx = Math.max(idx - 1, 0);
+      vis.forEach(i=>i.removeAttribute('aria-selected'));
+      if (idx >= 0) { vis[idx].setAttribute('aria-selected','true'); vis[idx].scrollIntoView({block:'nearest'}); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (idx >= 0 && vis[idx]) { selectItem(vis[idx]); }
+      else {
+        const v24 = ampmTo24(input.value);
+        if (v24) { hidden.value = v24; input.value = toAMPM(v24); closeList(); }
+      }
+    } else if (e.key === 'Escape') { closeList(); }
+  });
+
+  // select from dropdown
+  list.addEventListener('mousedown', (e) => {
+    const li = e.target.closest('.combo-item');
+    if (!li) return;
+    e.preventDefault();
+    selectItem(li);
+    input.focus();
+  });
+
+  input.addEventListener('blur', () => setTimeout(closeList, 120));
+}
+
+
+//This whole block runs automatically when your page finishes loading:
 document.addEventListener('DOMContentLoaded', () => {
   // Bind time select updates for announcement modals
   function bindTimeSelects() {
@@ -113,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // === MODAL HANDLER ===
+//controls all modal popup
 (function () {
   function openOverlay(overlay) {
     overlay.classList.add('is-open');
@@ -162,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  //Run the following code only after the full HTML is loaded
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.js-open-modal[data-modal]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -199,9 +319,24 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('editEventCoordinator').value = coordinator || '';
           document.getElementById('editVenue').value = venue || '';
           document.getElementById('editStartDate').value = startDate || '';
-          document.getElementById('editStartTime').value = startTime || '';
+
           document.getElementById('editEndDate').value = endDate || '';
-          document.getElementById('editEndTime').value = endTime || '';
+          // Normalize many possible formats to 24h "HH:MM"
+function normalizeTimeAny(t) {
+  if (!t) return '';
+  let s = String(t).trim();
+  // If "HH:MM" or "HH:MM:SS"
+  if (/^\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0, 5);
+  // Allow "1.13 am", "1:13am", "01:13 PM"
+  s = s.replace(/\./g, ':').toUpperCase().replace(/\s*(AM|PM)$/, ' $1');
+  const v = ampmTo24(s);     // uses your helper
+  return v || '';
+}
+
+// Use the new combobox+hidden pair
+setTimeCombo('edit_start', normalizeTimeAny(startTime));
+setTimeCombo('edit_end',   normalizeTimeAny(endTime));
+
           document.getElementById('editMaxParticipants').value = maxParticipants || '';
  //          document.getElementById('editStatus').value = status || '';
              document.getElementById('editStatus').value = (status || 'upcoming').toLowerCase();
@@ -430,6 +565,8 @@ else if (classList.contains('js-edit-announcement')) {
         }
       }
     });
+
+    //Close modal when clicking a “close” button
     document.addEventListener('click', (e) => {
       const c = e.target.closest('.js-close-modal');
       if (c) {
@@ -450,18 +587,13 @@ else if (classList.contains('js-edit-announcement')) {
           .querySelectorAll('.modal-overlay.is-open')
           .forEach((o) => closeOverlay(o));
     });
+    //The image preview (thumbnail)
     autoOpenFromHash();
     bindFileInputs(document);
   });
 })();
 
-// === DISABLE PAST DATES ===
-//document.addEventListener('DOMContentLoaded', () => {
-//  const today = new Date().toISOString().split('T')[0];
-//  document.querySelectorAll('input[type="date"]').forEach((el) => (el.min = today));
-//});
-//To enable past edates for edit events
-// === EVENTS (EDIT): status-aware date requirements ===
+//Runs after the full HTML page is loaded (so all modal elements exist).
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
 
@@ -500,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
   wireEventEditRules();
 });
 
-// === GENERIC SORT/FILTER (same as before, untouched) ===
+// === GENERIC SORT/FILTER
 (function () {
   function q(s) { return typeof s === 'string' ? document.querySelector(s) : s; }
   function field(row, key) {
@@ -631,6 +763,41 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 /////////////////////
+
+// For enabling editing time in events
+document.addEventListener('DOMContentLoaded', () => {
+  // Activate the custom time dropdowns (AM/PM comboboxes)
+  wireCombo('start');
+  wireCombo('end');
+  wireCombo('edit_start');
+  wireCombo('edit_end');
+
+  // Auto-convert AM/PM → 24-hour format before submit
+  const createForm = document.getElementById('createEventForm');
+  if (createForm) {
+    createForm.addEventListener('submit', (e) => {
+      const sInp = document.getElementById('start_time_combo');
+      const eInp = document.getElementById('end_time_combo');
+      const sHid = document.getElementById('start_time');
+      const eHid = document.getElementById('end_time');
+      if (!sHid.value && sInp.value) sHid.value = ampmTo24(sInp.value);
+      if (!eHid.value && eInp.value) eHid.value = ampmTo24(eInp.value);
+      if (!sHid.value) { e.preventDefault(); sInp.focus(); }
+    });
+  }
+
+  const editForm = document.getElementById('editEventForm');
+  if (editForm) {
+    editForm.addEventListener('submit', () => {
+      const sInp = document.getElementById('edit_start_time_combo');
+      const eInp = document.getElementById('edit_end_time_combo');
+      const sHid = document.getElementById('edit_start_time');
+      const eHid = document.getElementById('edit_end_time');
+      if (!sHid.value && sInp.value) sHid.value = ampmTo24(sInp.value);
+      if (!eHid.value && eInp.value) eHid.value = ampmTo24(eInp.value);
+    });
+  }
+});
 
 // === GENERAL SEARCH WITH DROPDOWN + FEATURED CARD ===
 function initSearch({ inputId, choicesId, cardId, containerSelector, itemSelector, cardFields, searchFields, hasDelete = false, prefix = 'fe', type = '' }) {
@@ -1109,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container,            // parent element that holds the items (tbody or div)
     itemSelector,         // 'tr' for tables, '.announcement-card' for cards
     pager,                // nav element for pagination buttons
-    perPage = 5,          // items per page
+    perPage = 10,          // items per page
     requireDataId = true, // only paginate items with data-id (safe for tables/cards)
   } = {}) {
     const root = typeof container === 'string' ? document.querySelector(container) : container;
@@ -1190,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container: '[data-table="clubs"] tbody',
     itemSelector: 'tr',
     pager: '#clubsPagination',
-    perPage: 5
+    perPage: 10
   });
 });
 
@@ -1200,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container: '[data-table="events"] tbody',
     itemSelector: 'tr',
     pager: '#eventsPagination',
-    perPage: 5
+    perPage: 7
   });
 });
 //colleges pagination
@@ -1208,7 +1375,7 @@ initPager({
   container: '[data-table="colleges"] tbody',
   itemSelector: 'tr',
   pager: '#collegesPagination',
-  perPage: 5
+  perPage: 10
 });
 
 //coordinators pagination
@@ -1216,7 +1383,7 @@ initPager({
   container: '[data-table="coordinators"] tbody',
   itemSelector: 'tr',
   pager: '#coordinatorsPagination',
-  perPage: 5
+  perPage: 10
 });
 
 //announcement page
@@ -1229,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container: '#annList',
     itemSelector: '.announcement-card',
     pager: '#annPagination',
-    perPage: 5,        // adjust page size as you like
+    perPage: 7,        // adjust page size as you like
     requireDataId: true
   });
 });
@@ -1240,6 +1407,8 @@ document.addEventListener('DOMContentLoaded', () => {
     container: '[data-table="members"] tbody',
     itemSelector: 'tr',
     pager: '#membersPagination',
-    perPage: 5
+    perPage: 10
   });
 });
+
+

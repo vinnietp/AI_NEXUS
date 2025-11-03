@@ -2,8 +2,6 @@
 import os
 from datetime import datetime
 from flask import current_app
-from flask import request, url_for
-from math import ceil
 
 MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
@@ -53,7 +51,7 @@ def parse_dt(date_str: str | None, time_str: str | None) -> datetime | None:
     return None
 
 
-# ---------- Moved from routes.py ----------
+# Convert a 12-hour time with AM/PM into a 24-hour (HH:MM) format.
 def hm_ampm_to_24(hour_str: str, minute_str: str, ampm: str) -> tuple[int, int]:
     """Convert 12h + AM/PM to 24h hour, minute."""
     h = int(hour_str)

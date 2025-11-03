@@ -729,7 +729,7 @@ body {
     padding: 15px;
   }
 
-  
+
 }
 
 
@@ -1753,3 +1753,25 @@ select[multiple] {
 /*header links*/
 
 
+/* Styles for enabling time editor in event modal*/
+eventModal select.browser-default {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fff;
+  }
+eventModal .modal, #eventModal .modal .modal-content { overflow: visible; }
+  .combo { position: relative; }
+  .combo-input {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid #ddd; border-radius: 6px; background: #fff;
+  }
+  .combo-list {
+    position: absolute; z-index: 1000; left: 0; right: 0; top: calc(100% + 4px);
+    max-height: 240px; overflow-y: auto; background: #fff;
+    border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.08);
+    margin: 0; padding: 4px 0; list-style: none;
+  }
+  .combo-item { padding: 8px 10px; cursor: pointer; }
+  .combo-item[aria-selected="true"], .combo-item:hover { background: #f3f6ff; }

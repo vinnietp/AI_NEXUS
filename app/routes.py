@@ -1,15 +1,12 @@
 # routes.py
 import os
 from datetime import datetime
-from operator import or_
 from uuid import uuid4
-
 from flask import render_template, request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
 from models import db, Club, Event ,Coordinator,College,Announcement,Member, member_clubs
-from utils import time_ago,parse_dt,card_datetime,table_date,relpath_from_static,clean_phone,clean_role,ALLOWED_ROLES
-from sqlalchemy import func, case
-
+from utils import time_ago,parse_dt,card_datetime,table_date,relpath_from_static,clean_phone,clean_role
+from sqlalchemy import func,or_
 
 
 def register_routes(app):
@@ -201,13 +198,17 @@ def register_routes(app):
             if ext not in allowed_ext:
                 flash("Invalid logo format. Allowed: png, jpg, jpeg, gif, webp.", "error")
                 return back_to_modal()
-
+            #sanitize filename
             safe_name = secure_filename(file.filename)
+            #add a unique identifier to avoid overwrites
+            unique_name = f"{uuid4().hex}_{safe_name}"
+            #prepare folder
             save_dir = current_app.config["CLUB_UPLOAD_FOLDER"]  # e.g., <project>/static/uploads/clubs
             os.makedirs(save_dir, exist_ok=True)
-            save_path = os.path.join(save_dir, safe_name)
+            #save file safely
+            save_path = os.path.join(save_dir, unique_name)
             file.save(save_path)
-
+            #store relative path for static access
             logo_rel_path = relpath_from_static(save_path)
 
         try:
@@ -229,7 +230,6 @@ def register_routes(app):
 
         return redirect(url_for("clubs"))
 
-    # ---------- Events ----------
     # ---------- Events ----------
     @app.route("/events")
     def events():
@@ -296,7 +296,7 @@ def register_routes(app):
             table_date=table_date,
         )
 
-    # ---------- create events (updated for soft-delete) ----------
+    # ---------- create events
     @app.route("/events/create", methods=["POST"])
     def create_event():
         EVENT_STATUS_VALUES = {"upcoming", "completed", "cancelled"}
@@ -368,9 +368,10 @@ def register_routes(app):
                 return back_to_modal(start_time, end_time)
 
             safe_name = secure_filename(file.filename)
+            unique_name = f"{uuid4().hex}_{safe_name}"
             save_dir = current_app.config["EVENT_UPLOAD_FOLDER"]
             os.makedirs(save_dir, exist_ok=True)
-            save_path = os.path.join(save_dir, safe_name)
+            save_path = os.path.join(save_dir, unique_name)
             file.save(save_path)
             img_rel_path = relpath_from_static(save_path)
 
@@ -519,8 +520,6 @@ def register_routes(app):
     @app.route("/coordinators")
     def coordinators():
         """Display active coordinators (non-deleted) along with their clubs and colleges."""
-
-        # ✅ Only non-deleted clubs and colleges (for dropdowns / modal)
         clubs = (
             Club.query
             .filter(Club.is_deleted.is_(False))
@@ -548,7 +547,7 @@ def register_routes(app):
         faculty_count = (
             db.session.query(Coordinator)
             .filter(
-                Coordinator.role_type.in_(["faculty", "lead", "co-lead", "mentor"]),
+                Coordinator.role_type != "student",
                 Coordinator.status == "active",
                 Coordinator.is_deleted.is_(False),
             )
@@ -668,9 +667,10 @@ def register_routes(app):
                 return back_to_modal()
 
             safe_name = secure_filename(file.filename)
+            unique_name = f"{uuid4().hex}_{safe_name}"
             save_dir = current_app.config["COORDINATOR_UPLOAD_FOLDER"]
             os.makedirs(save_dir, exist_ok=True)
-            save_path = os.path.join(save_dir, safe_name)
+            save_path = os.path.join(save_dir, unique_name)
             file.save(save_path)
 
             image_rel_path = os.path.relpath(save_path, current_app.static_folder)
@@ -701,7 +701,6 @@ def register_routes(app):
 
         return redirect(url_for("coordinators"))
 
-    from sqlalchemy import or_
 
     # ---------- Announcements ----------
     @app.route("/announcements")
@@ -868,7 +867,7 @@ def register_routes(app):
 
     ################################################################################################
 #EDIT OPERATIONS
-    from sqlalchemy import func
+
 
     @app.route("/clubs/update", methods=["POST"])
     def update_club():
@@ -891,24 +890,7 @@ def register_routes(app):
         if status in ("active", "inactive"):
             club.status = status
 
-        # ✅ Handle coordinator_id (ignore if coordinator is soft-deleted)
-        coordinator_id_raw = f.get("coordinator_id")
-        if coordinator_id_raw:
-            coordinator_id = int(coordinator_id_raw)
-            coordinator = (
-                Coordinator.query
-                .filter(
-                    Coordinator.coordinator_id == coordinator_id,
-                    Coordinator.is_deleted.is_(False)
-                )
-                .first()
-            )
-            if not coordinator:
-                flash("Invalid or deleted coordinator selected.", "error")
-                return redirect(url_for("clubs"))
-            club.coordinator_id = coordinator_id
-        else:
-            club.coordinator_id = None
+
 
         # ✅ Optional logo upload
         file = request.files.get("club_logo")
@@ -996,8 +978,9 @@ def register_routes(app):
             return redirect(url_for("events"))
 
         if status == "upcoming":
-            from datetime import datetime
-            now = datetime.now(new_start_at.tzinfo) if getattr(new_start_at, "tzinfo", None) else datetime.now()
+
+            # now = datetime.now(new_start_at.tzinfo) if getattr(new_start_at, "tzinfo", None) else datetime.now()
+            now=datetime.now()
             if new_start_at < now:
                 flash("Start time must be in the future for upcoming events.", "error")
                 return redirect(url_for("events"))
@@ -1203,7 +1186,7 @@ def register_routes(app):
         return redirect(url_for("coordinators"))
 
     #Edit announcements
-    from sqlalchemy import or_
+
 
     # ---------- Edit announcements (soft-delete safe) ----------
     @app.route("/announcements/update", methods=["POST"])
@@ -1311,10 +1294,10 @@ def register_routes(app):
             club.is_deleted = True
             club.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ Club moved to trash (soft deleted).", "success")
+            flash("🗑️ Club moved to trash", "success")
         except Exception:
             db.session.rollback()
-            current_app.logger.exception("Failed to soft delete club")
+            current_app.logger.exception("Failed to delete club")
             flash("❌ Failed to delete club.", "error")
 
         return redirect(url_for("clubs"))
@@ -1333,7 +1316,7 @@ def register_routes(app):
             event.is_deleted = True
             event.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ Event moved to trash (soft deleted).", "success")
+            flash("🗑️ Event moved to trash.", "success")
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Failed to soft delete event")
@@ -1355,7 +1338,7 @@ def register_routes(app):
             college.is_deleted = True
             college.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ College moved to trash (soft deleted).", "success")
+            flash("🗑️ College moved to trash.", "success")
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Failed to soft delete college")
@@ -1377,7 +1360,7 @@ def register_routes(app):
             coordinator.is_deleted = True
             coordinator.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ Coordinator moved to trash (soft deleted).", "success")
+            flash("🗑️ Coordinator moved to trash.", "success")
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Failed to soft delete coordinator")
@@ -1399,7 +1382,7 @@ def register_routes(app):
             announcement.is_deleted = True
             announcement.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ Announcement moved to trash (soft deleted).", "success")
+            flash("🗑️ Announcement moved to trash.", "success")
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Failed to soft delete announcement")
@@ -1720,7 +1703,7 @@ def register_routes(app):
             member.is_deleted = True
             member.deleted_at = func.now()
             db.session.commit()
-            flash("🗑️ Member moved to trash (soft deleted).", "success")
+            flash("🗑️ Member moved to trash.", "success")
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Failed to soft delete member")

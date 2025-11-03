@@ -39,7 +39,7 @@
           <div class="form-group">
             <label for="editMemberCollegeSelect">College Name (optional)</label>
             <select id="editMemberCollegeSelect" name="college_id">
-              <option value="">— None —</option>
+             <option value="">Select College</option>
               {% for college in colleges %}
                 <option value="{{ college.college_id }}">{{ college.college_name }}</option>
               {% else %}

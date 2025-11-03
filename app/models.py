@@ -3,7 +3,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-#########33
 
 # -------------------------- Association table for many-to-many between Member and Club --------------------------
 member_clubs = db.Table('member_clubs',
@@ -39,10 +38,8 @@ class College(db.Model):
         lazy=True,
     )
 
-    # Optional relationship if you load clubs via College.clubs
-    # clubs = db.relationship("Club", backref="college", lazy="select")
 
-# Keep your club as-is
+
 class Club(db.Model):
     __tablename__ = "clubs"
 
@@ -101,13 +98,10 @@ class Event(db.Model):
     start_at = db.Column(db.DateTime, nullable=False)  # UTC
     end_at   = db.Column(db.DateTime, nullable=True)  # UTC
 
-    # Media & meta
     event_image = db.Column(db.String(255))
     max_participants = db.Column(db.Integer)
     status = db.Column(db.String(20), default="upcoming", nullable=False)  # one of EVENT_STATUS_VALUES
     description = db.Column(db.Text)
-
-    # Audit
     created_time = db.Column(db.DateTime, default=datetime.now, nullable=False)
     updated_time = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
     is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
@@ -124,7 +118,6 @@ class Event(db.Model):
 # --------------------------
 # Coordinator
 # --------------------------
-    # models.py
 class Coordinator(db.Model):
     __tablename__ = "coordinators"
 
@@ -154,9 +147,9 @@ class Coordinator(db.Model):
     is_deleted = db.Column(db.Boolean, default=False, nullable=False, index=True)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-
-    # <-- IMPORTANT: use back_populates to pair with the parent sides above
+#Each Coordinator is linked to one Club (via the club_id foreign key).
     club    = db.relationship("Club", back_populates="coordinators", foreign_keys=[club_id])
+#bidirectional
     college = db.relationship("College", back_populates="coordinators")
 
     # def __repr__(self):
